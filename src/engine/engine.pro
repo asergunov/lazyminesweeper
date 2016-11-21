@@ -5,10 +5,14 @@ CONFIG += staticlib
 
 VERSION = 0.0.1
 
-SOURCES = \
-    Board.hpp \
-    Solver.hpp \
+SOURCES = 
 
 HEADERS += \
+    Board.hpp \
+    Solver.hpp \
     Concepts.hpp \
-    SquareBoard.hpp
+    SquareBoard.hpp \
+    Solver.hpp \
+    PlayerBoardData.hpp \
+    PrivateBoardData.hpp \
+    Equations.hpp

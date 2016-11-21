@@ -1,5 +1,4 @@
-#ifndef CONCEPTS_HPP
-#define CONCEPTS_HPP
+#pragma once
 
 namespace minesweeper {
 namespace engine {
@@ -9,5 +8,3 @@ namespace engine {
 #endif
 
 }}
-
-#endif // CONCEPTS_HPP

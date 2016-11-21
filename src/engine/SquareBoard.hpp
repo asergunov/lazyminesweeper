@@ -1,5 +1,4 @@
-#ifndef SQUAREBOARD_HPP
-#define SQUAREBOARD_HPP
+#pragma once
 
 #include <set>
 #include <algorithm>
@@ -64,8 +63,16 @@ struct IndexSet: public std::set<Index> {
 };
 
 struct Topology {
+    typedef u_int8_t neighbour_count_type;
+    using index_type = Index;
+    using index_set_type = IndexSet;
+
     Index m_dims;
     explicit Topology(const Index& dims): m_dims(dims) {
+
+    }
+
+    Topology(const coord_type& w, const coord_type& h): m_dims(w,h) {
 
     }
 
@@ -96,20 +103,8 @@ struct Topology {
 
 };
 
-
-struct Board {
-    using index_type = Index;
-    Topology topology;
-
-    Board(const coord_type& w, const coord_type& h)
-        : topology(index(w, h)) {}
-
-    static Index index(const coord_type& x, const coord_type& y) {
-        return Index{x, y};
-    }
-};
 }
+
 
 }}
 
-#endif // SQUAREBOARD_HPP

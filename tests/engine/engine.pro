@@ -3,7 +3,9 @@ TEMPLATE = app
 CONFIG -= QT
 
 SOURCES +=  main.cpp \
-            SquareBoard.cpp
+            SquareBoard.cpp \
+    SquareBoardData.cpp \
+    Solver.cpp
 
 
 LIBS += -L/usr/local/lib -lgtest
