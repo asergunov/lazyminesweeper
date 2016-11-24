@@ -5,7 +5,8 @@ CONFIG -= QT
 SOURCES +=  main.cpp \
             SquareBoard.cpp \
     SquareBoardData.cpp \
-    Solver.cpp
+    Solver.cpp \
+    Equations.cpp
 
 
 LIBS += -L/usr/local/lib -lgtest

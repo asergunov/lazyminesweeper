@@ -6,6 +6,9 @@
 #include <set>
 #include <map>
 
+
+#include <boost/numeric/ublas/triangular.hpp>
+
 namespace minesweeper {
 namespace engine {
 namespace solver {
@@ -19,8 +22,27 @@ struct Solver
     typedef typename topology_type::neighbour_count_type neighbour_count_type;
 
     typedef std::vector<std::set<index_type>> mapping_type;
+    typedef std::pair<Equations, mapping_type> mapped_equations_type;
 
-    std::pair<Equations, mapping_type> parseBoard(const topology_type& topology, const player_data_type& data) {
+    typedef Equations::value_type value_type;
+    typedef size_t variation_count_type;
+    typedef Equations::bound_type bound_type;
+
+    boost::numeric::ublas::triangular_matrix<bound_type, boost::numeric::ublas::upper> pascal_triangle;
+
+    Solver()
+        :pascal_triangle(T::max_neighbours+1, T::max_neighbours+1) {
+        pascal_triangle(0,0)=1;
+        for(size_t i = 1; i < pascal_triangle.size1(); ++i) {
+            pascal_triangle(0,i)=1;
+            pascal_triangle(i,i)=1;
+            for(size_t j = 1; j < i; ++j) {
+                pascal_triangle(j, i) = pascal_triangle(j, i-1)+pascal_triangle(j-1, i-1);
+            }
+        }
+    }
+
+    mapped_equations_type parseBoard(const topology_type& topology, const player_data_type& data) {
         struct opened_item_data_type {
             size_t row;
             neighbour_count_type bombs_count;
@@ -66,6 +88,56 @@ struct Solver
         }
 
         return {equations, mapping};
+    }
+
+    variation_count_type combinations_count(const bound_type& bombs, const bound_type& bound) {
+        assert(bound >= bombs);
+        return pascal_triangle(bombs, bound);
+    }
+
+    variation_count_type number_of_solutions(const Equations& equations) {
+        if(equations.variables_count() == 1) {
+            /**
+              * a[i][0]*x=b[i]
+              * x<_bound[0]
+              */
+            auto i_b = equations._b.begin();
+            value_type x;
+            bool found = false;
+            const auto& bound = equations._bound[0];
+            for(auto i_a_row = equations._A.begin1(); i_a_row != equations._A.end1(); ++i_a_row, ++i_b) {
+                const auto& a = i_a_row[0];
+                const auto& b = *i_b;
+                if(a == 0) {
+                    if(b != 0)
+                        return 0;
+                    continue; // nothing to check
+                }
+
+                if(!found) {
+                    x = b/a;
+                    found = true;
+                    if(x<0 || x > bound || x.denominator() != 1)
+                        return 0;
+                } else if (x != b/a){
+                    return 0;
+                }
+            }
+
+            return combinations_count(x.numerator(), bound);
+        }
+
+        auto minimal_bound = std::min_element(equations._bound.begin(), equations._bound.end());
+        variation_count_type result = 0;
+        for(bound_type b = 0; b<=*minimal_bound; ++b) {
+            result += number_of_solutions(equations.reduced({{minimal_bound.index(), b}}))*combinations_count(b, *minimal_bound);
+        }
+
+        return result;
+    }
+
+    value_type probablities() {
+
     }
 };
 

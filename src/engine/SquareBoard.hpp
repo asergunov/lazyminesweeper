@@ -66,6 +66,7 @@ struct Topology {
     typedef u_int8_t neighbour_count_type;
     using index_type = Index;
     using index_set_type = IndexSet;
+    static const neighbour_count_type max_neighbours = 8;
 
     Index m_dims;
     explicit Topology(const Index& dims): m_dims(dims) {

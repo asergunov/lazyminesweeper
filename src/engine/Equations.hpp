@@ -75,10 +75,10 @@ std::ostream& operator<<(std::ostream& o, const boost::numeric::ublas::vector<T>
   return o;
 }
 
-std::ostream& operator<<(std::ostream& o, const int8_t& x)
-{
-  return o << (int)x;
-}
+//std::ostream& operator<<(std::ostream& o, const int8_t& x)
+//{
+//  return o << (int)x;
+//}
 
 /**
  * @brief The Equations struct
@@ -94,6 +94,12 @@ struct Equations {
     using matrix_type = boost::numeric::ublas::matrix<value_type>;
     using vector_type = boost::numeric::ublas::vector<value_type>;
     using bound_vector_type = boost::numeric::ublas::vector<bound_type>;
+
+    /**
+     * @brief The Reduction struct
+     * reduction of equation system setting variable to fixed value
+     */
+    using reduction_type = std::map<size_t, bound_type>;
 
     Equations(const matrix_type& A, const vector_type& b, const bound_vector_type& bound)
         : _A(A), _b(b), _bound(bound) {
@@ -113,12 +119,86 @@ struct Equations {
         return _A == arg._A && _b == arg._b && _bound == arg._bound;
     }
 
+    size_t count() const {
+        return _A.size1();
+    }
+
+    size_t variables_count() const {
+        return _A.size2();
+    }
+
     matrix_type _A;
     vector_type _b;
     bound_vector_type _bound;
 
     friend std::ostream& operator<<(std::ostream& o, const Equations& x) {
         return o << "A: " << x._A << ", b: " << x._b << ", bound: " << x._bound;
+    }
+
+
+    Equations reduced(const reduction_type& reduction) const {
+        Equations result(_A.size1(), _A.size2() - reduction.size());
+        result._b = _b;
+
+        auto i_A_out = result._A.begin1();
+        const auto end_A_out = result._A.end1();
+
+        auto i_A_in = _A.begin1();
+        const auto end_A_in = _A.end1();
+
+        auto i_b_out = result._b.begin();
+        auto end_b_out = result._b.end();
+
+        auto i_b_in = _b.begin();
+        auto end_b_in = _b.end();
+
+        {
+            auto i_bound_in = _bound.begin();
+            const auto end_bound_in = _bound.end();
+
+            auto i_bound_out = result._bound.begin();
+
+            auto i_values = reduction.begin();
+            const auto end_values = reduction.end();
+
+            for(;i_bound_in != end_bound_in;) {
+                if(i_values != end_values && i_values->first == i_bound_in.index()) {
+                    ++i_values;
+                } else {
+                    *i_bound_out = *i_bound_in;
+                    ++i_bound_out;
+                }
+                ++i_bound_in;
+            }
+        }
+
+        for(;i_A_in != end_A_in; ++i_b_in, ++i_b_out, ++i_A_in) {
+            assert(i_b_in != end_b_in);
+            assert(i_b_out != end_b_out);
+
+            auto i2_A_in = i_A_in.begin();
+            const auto end2_A_in = i_A_in.end();
+
+            auto i2_A_out = i_A_out.begin();
+            const auto end2_A_out = i_A_out.end();
+
+            auto i_values = reduction.begin();
+            const auto end_values = reduction.end();
+
+            for(;i2_A_in != end2_A_in;) {
+                if(i_values != end_values && i_values->first == i2_A_in.index2()) {
+                    *i_b_out -= *i2_A_in*i_values->second;
+                    ++i_values;
+                } else {
+                    assert(i2_A_out != end2_A_out);
+                    *i2_A_out = *i2_A_in;
+                    ++i2_A_out;
+                }
+                ++i2_A_in;
+            }
+             ++i_A_out;
+        }
+        return result;
     }
 };
 
