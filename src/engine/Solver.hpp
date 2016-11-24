@@ -25,8 +25,11 @@ struct Solver
     typedef std::pair<Equations, mapping_type> mapped_equations_type;
 
     typedef Equations::value_type value_type;
+    typedef Equations::vector_type value_vector_type;
     typedef size_t variation_count_type;
     typedef Equations::bound_type bound_type;
+
+    typedef std::map<index_type, value_type> index_porapablities;
 
     boost::numeric::ublas::triangular_matrix<bound_type, boost::numeric::ublas::upper> pascal_triangle;
 
@@ -136,8 +139,33 @@ struct Solver
         return result;
     }
 
-    value_type probablities() {
+    value_vector_type probablities(const Equations& e) {
+        value_vector_type result(e.variables_count());
+        auto i_result = result.begin();
+        for(size_t column = 0; column < e.variables_count(); ++column, ++i_result) {
+            *i_result = 0;
+            const auto& bound = e._bound(column);
+            for(bound_type value = 1; value < bound; ++value) {
+                *i_result = number_of_solutions(e.reduced({{column, value}}))*combinations_count(value-1, bound-1);
+            }
+        }
+        return  result/number_of_solutions(e);
+    }
 
+    index_porapablities probablities(const topology_type& topology, const player_data_type& data) {
+        const auto& e = parseBoard(topology, data);
+        const auto& porabablities = probablities(e.first);
+
+        index_porapablities result;
+
+        auto i_mapping = e.second.begin();
+        auto i_porabablities = porabablities.begin();
+        for(; i_porabablities != porabablities.end(); ++i_mapping, ++i_porabablities) {
+            for(const auto& index : *i_mapping)
+                result[index] = *i_porabablities;
+        }
+
+        return result;
     }
 };
 

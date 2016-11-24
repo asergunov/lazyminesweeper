@@ -170,3 +170,42 @@ TEST(SqureSolver, Side3_1) {
     const auto& e = s.parseBoard(t, data);
     EXPECT_EQ(2, s.number_of_solutions(e.first));
 }
+
+TEST(SqureSolver, Porabablities_Corner_3) {
+    Topology t(2,2);
+    PlayerBoardData<Topology> data;
+    data.setOpened({0,0}, 3);
+
+    Solver<Topology> s;
+    Solver<Topology>::index_porapablities expected =
+    {{{0,1}, 1}, {{1,1}, 1}, {{1,0}, 1} };
+
+    EXPECT_EQ(expected, s.probablities(t, data));
+}
+
+TEST(SqureSolver, Porabablities_Corner_1) {
+    Topology t(2,2);
+    PlayerBoardData<Topology> data;
+    data.setOpened({0,0}, 1);
+
+    Solver<Topology> s;
+    Solver<Topology>::index_porapablities expected =
+    {{{0,1}, {1,3}}, {{1,1}, {1,3}}, {{1,0}, {1,3}} };
+
+    EXPECT_EQ(expected, s.probablities(t, data));
+}
+
+TEST(SqureSolver, Porabablities_Side3_1) {
+    Topology t(4,2);
+    PlayerBoardData<Topology> data;
+    data.setOpened({1,0}, 3);
+    data.setOpened({2,0}, 1);
+
+    Solver<Topology> s;
+    Solver<Topology>::index_porapablities expected =
+    {{{0,0}, 1}, {{0,1}, 1},
+    {{3,0}, 0}, {{3,1}, 0},
+    {{1,1}, {1,2}}, {{2,1}, {1,2}}};
+
+    EXPECT_EQ(expected, s.probablities(t, data));
+}
