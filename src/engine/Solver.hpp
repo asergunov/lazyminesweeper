@@ -5,7 +5,7 @@
 
 #include <set>
 #include <map>
-
+#include <algorithm>
 
 #include <boost/numeric/ublas/triangular.hpp>
 
@@ -99,7 +99,11 @@ struct Solver
     }
 
     variation_count_type number_of_solutions(const Equations& equations) {
-        if(equations.variables_count() == 1) {
+        if(equations.variables_count() == 0) {
+            return std::all_of(equations._b.begin(), equations._b.end(), [](const value_type& v){
+                return v == 0;
+            }) ? 1 : 0;
+        } else if(equations.variables_count() == 1) {
             /**
               * a[i][0]*x=b[i]
               * x<_bound[0]
@@ -131,6 +135,8 @@ struct Solver
         }
 
         auto minimal_bound = std::min_element(equations._bound.begin(), equations._bound.end());
+        assert(minimal_bound != equations._bound.end());
+
         variation_count_type result = 0;
         for(bound_type b = 0; b<=*minimal_bound; ++b) {
             result += number_of_solutions(equations.reduced({{minimal_bound.index(), b}}))*combinations_count(b, *minimal_bound);
@@ -145,8 +151,8 @@ struct Solver
         for(size_t column = 0; column < e.variables_count(); ++column, ++i_result) {
             *i_result = 0;
             const auto& bound = e._bound(column);
-            for(bound_type value = 1; value < bound; ++value) {
-                *i_result = number_of_solutions(e.reduced({{column, value}}))*combinations_count(value-1, bound-1);
+            for(bound_type value = 1; value <= bound; ++value) {
+                *i_result += number_of_solutions(e.reduced({{column, value}}))*combinations_count(value-1, bound-1);
             }
         }
         return  result/number_of_solutions(e);

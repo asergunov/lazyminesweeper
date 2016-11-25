@@ -102,6 +102,39 @@ TEST(Solver, combinatoins_count) {
     EXPECT_EQ(8*7*6*5*4*3*2*1/(5*4*3*2*1)/(3*2*1), s.combinations_count(5, 8));
 }
 
+TEST(Solver, number_of_solutions_corner_solvable_1) {
+    Solver<Topology> s;
+    Equations e(1,0);
+    e._b(0) = 0;
+    EXPECT_EQ(1, s.number_of_solutions(e));
+}
+
+TEST(Solver, number_of_solutions_corner_solvable_4) {
+    Solver<Topology> s;
+    Equations e(4,0);
+    e._b(0) = 0;
+    e._b(1) = 0;
+    e._b(2) = 0;
+    e._b(3) = 0;
+    EXPECT_EQ(1, s.number_of_solutions(e));
+}
+
+TEST(Solver, number_of_solutions_corner_non_solvable_1) {
+    Solver<Topology> s;
+    Equations e(1,0);
+    e._b(0) = 1;
+    EXPECT_EQ(0, s.number_of_solutions(e));
+}
+
+TEST(Solver, number_of_solutions_corner_non_solvable_3) {
+    Solver<Topology> s;
+    Equations e(3,0);
+    e._b(0) = 0;
+    e._b(1) = 1;
+    e._b(2) = -1;
+    EXPECT_EQ(0, s.number_of_solutions(e));
+}
+
 TEST(SqureSolver, SimpleNumberOfSolutions) {
     Topology t(3,3);
     PlayerBoardData<Topology> data;
