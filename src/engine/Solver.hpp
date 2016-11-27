@@ -9,7 +9,7 @@
 
 #include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/lu.hpp>
+#include <boost/numeric/ublas/vector_proxy.hpp>
 
 namespace minesweeper {
 namespace engine {
@@ -209,6 +209,47 @@ struct Solver
         Equations result(prod(reducedU,equations._A), prod(reducedU,equations._b), equations._bound);
 
         return result;
+    }
+
+    size_t gauss_inplace(Equations& equations) {
+        using namespace boost::numeric::ublas;
+
+        auto& A = equations._A;
+        size_t colU = 0, colA = 0;
+        for(; colA < A.size2(); ++colA) {
+            const auto columnA = column(A, colA);
+            // find non-zero row
+            auto i_itemA = columnA.begin()+colU;
+            for(;i_itemA != columnA.end(); ++i_itemA) {
+                if(*i_itemA != 0)
+                    break;
+            }
+
+            if(i_itemA != columnA.end()) {
+                equations.swapRows(colU, i_itemA.index());
+                auto mainRow = row(A, colU);
+                const auto k = Equations::matrix_type::value_type(1)/mainRow(colA);
+                equations.multRow(colU, k);
+
+                for(size_t irow = 0; irow < A.size1(); ++irow) {
+                    if(irow == colU)
+                        continue;
+
+                    auto rowA = row(A, irow);
+                    equations.addRow(irow, colU, -rowA[colA]);
+                }
+                ++colU;
+            }
+        }
+        return colU;
+    }
+
+    Equations gauss(const Equations& equations) {
+        using namespace boost::numeric::ublas;
+
+        Equations e = equations;
+        auto colU = gauss_inplace(e);
+        return Equations(subrange(e._A, 0, colU, 0, e._A.size2()), subrange(e._b, 0, colU), equations._bound);
     }
 
     std::vector<mapped_equations_type> decompose(const mapped_equations_type& e) {

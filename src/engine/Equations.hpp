@@ -3,6 +3,8 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/operations.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+
 #include <boost/rational.hpp>
 
 #include <ostream>
@@ -199,6 +201,36 @@ struct Equations {
              ++i_A_out;
         }
         return result;
+    }
+
+    void swapRows(size_t i, size_t j) {
+        using namespace boost::numeric::ublas;
+        auto iRow = row(_A, i);
+        auto jRow = row(_A, j);
+        std::swap_ranges(iRow.begin(), iRow.end(), jRow.begin());
+        std::swap(_b(i), _b(j));
+    }
+
+    /**
+     * @brief addRow
+     * @param changed
+     * @param other
+     * @param k
+     *
+     * row[changed] += row[other]*k;
+     */
+    void addRow(size_t changed, size_t other, const value_type& k) {
+        auto changedRow = row(_A, changed);
+        const auto otherRow = row(_A, other);
+
+        changedRow += otherRow*k;
+        _b(changed) += k*_b(other);
+    }
+
+    void multRow(size_t changed, const value_type& k) {
+        auto changedRow = row(_A, changed);
+        changedRow *= k;
+        _b(changed) *= k;
     }
 };
 

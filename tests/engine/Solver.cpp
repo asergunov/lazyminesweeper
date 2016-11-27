@@ -511,7 +511,7 @@ TEST(Solver, orthogonalize_2) {
  * x1 + x2 = 1
  * x1 + x2 + x3 + x4 = 2
  */
-TEST(Solver, orthogonalize_3) {
+TEST(Solver, gauss) {
     Equations e(2, 4);
     e._b(0) = e._A(0,0) = e._A(0,1) = 1;
     e._A(1,0) = e._A(1,1) = e._A(1,2) = e._A(1,3) = 1;
@@ -522,14 +522,49 @@ TEST(Solver, orthogonalize_3) {
     e._bound(3) = 1;
 
 
-    Equations expected(1, 2);
-    expected._A(0,0) = 2; expected._A(0,1) = 2;
-    expected._b(0) = 2;
-    expected._bound(0) = 1;
-    expected._bound(1) = 1;
+    Equations expected(2, 4);
+    expected._A(0,0) = 1; expected._A(0,1) = 1;
+    expected._A(1,2) = 1; expected._A(1,3) = 1;
+
+    expected._b(0) = 1;
+    expected._b(1) = 1;
+
+    expected._bound = e._bound;
 
     Solver<Topology> s(8);
 
-    EXPECT_EQ(expected, s.orthogonalize(e));
-    EXPECT_EQ(s.specter(e), s.specter(s.orthogonalize(e)));
+    EXPECT_EQ(expected, s.gauss(e));
+    EXPECT_EQ(s.specter(e), s.specter(s.gauss(e)));
+}
+
+/**
+ * x1 + x2           = 1
+ * x1 + x2 + x3 + x4 = 3
+ *      x2           = 1
+ */
+TEST(Solver, gauss_2) {
+    Equations e(3, 4);
+    e._b(0) = e._A(0,0) = e._A(0,1) = 1;
+    e._A(1,0) = e._A(1,1) = e._A(1,2) = e._A(1,3) = 1;
+    e._b(1) = 3;
+    e._b(2) = e._A(2,1) = 1;
+    e._bound(0) = 1;
+    e._bound(1) = 1;
+    e._bound(2) = 1;
+    e._bound(3) = 1;
+
+
+    Equations expected(2, 4);
+    expected._A(0,0) = 1; expected._A(0,1) = 1;
+    expected._A(1,2) = 1; expected._A(1,3) = 1;
+
+    expected._b(0) = 1;
+    expected._b(1) = 1;
+
+    expected._bound = e._bound;
+
+    Solver<Topology> s(8);
+
+    EXPECT_EQ(expected, s.gauss(e));
+    EXPECT_EQ(s.specter(e), s.specter(s.gauss(e)));
 }
