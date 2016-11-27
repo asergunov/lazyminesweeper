@@ -1,5 +1,7 @@
 TEMPLATE = lib
 
+TARGET = minsweeper-engine
+
 CONFIG -= QT
 CONFIG += staticlib
 

@@ -69,6 +69,51 @@ struct Topology {
     static const neighbour_count_type max_neighbours = 8;
 
     Index m_dims;
+
+    struct const_iterator {
+        Index _index;
+        const Topology& _topology;
+        const_iterator(const Index& index, const Topology& topology)
+            : _index(index)
+            , _topology(topology) {
+
+        }
+
+        const_iterator operator+(const size_t& d) {
+            const auto t = _index.first*_topology.m_dims.second + _index.second + d;
+            return {{t/_topology.m_dims.second, t%_topology.m_dims.second}, _topology};
+        }
+
+        const_iterator& operator++() {
+            ++_index.second;
+            if(_index.second >= _topology.m_dims.second) {
+                _index.second = 0;
+                ++_index.first;
+            }
+            return *this;
+        }
+
+        const Index& operator*() const {
+            return _index;
+        }
+
+        bool operator!=(const const_iterator& other) const {
+            return _index != other._index;
+        }
+    };
+
+    const_iterator begin() const {
+        return {{0,0}, *this};
+    }
+
+    const_iterator end() const {
+        return {{m_dims.first, 0}, *this};
+    }
+
+    size_t cellsCount() const {
+        return m_dims.first*m_dims.second;
+    }
+
     explicit Topology(const Index& dims): m_dims(dims) {
 
     }

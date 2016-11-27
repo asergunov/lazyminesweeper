@@ -89,7 +89,7 @@ std::ostream& operator<<(std::ostream& o, const boost::numeric::ublas::vector<T>
  * x in [0, ..., bound]
  */
 struct Equations {
-    using bound_type = int8_t;
+    using bound_type = int64_t;
     using value_type = boost::rational<int64_t>;
     using matrix_type = boost::numeric::ublas::matrix<value_type>;
     using vector_type = boost::numeric::ublas::vector<value_type>;
