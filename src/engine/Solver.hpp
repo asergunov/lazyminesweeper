@@ -115,6 +115,7 @@ struct Solver
     };
 
     std::map<Equations, variation_count_type, EquationsOrder> cache_number_of_solutions;
+    std::map<Equations, specter_type, EquationsOrder> cache_specter;
 
     Solver(const size_t& max_group_size)
         :pascal_triangle(max_group_size+1, max_group_size+1) {
@@ -397,8 +398,15 @@ struct Solver
         return pascal_triangle(bombs, bound);
     }
 
-
     specter_type specter(const Equations& equations) {
+        auto i = cache_specter.find(equations);
+        if(i == cache_specter.end()) {
+            i = cache_specter.emplace(equations, specter_no_cahce(equations)).first;
+        }
+        return i->second;
+    }
+
+    specter_type specter_no_cahce(const Equations& equations) {
         if(equations.variables_count() == 0) {
             return std::all_of(equations._b.begin(), equations._b.end(), [](const value_type& v){
                 return v == 0;
