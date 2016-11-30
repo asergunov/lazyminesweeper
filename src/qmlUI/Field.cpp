@@ -33,7 +33,7 @@ bool Field::hasFlag(const QPoint &index) const
 qreal Field::minePorabablity(const QPoint &index) const
 {
     const auto i = _data->porapablities.find(toIndex(index));
-    return i == _data->porapablities.end() ? -1.0 : qreal(i->second.numerator())/i->second.denominator();
+    return i == _data->porapablities.end() ? -1.0 : Solver::toDouble(i->second);
 }
 
 int Field::bombsNearCount(const QPoint &index) const

@@ -6,6 +6,8 @@
 using namespace minesweeper::engine::solver;
 using namespace minesweeper::engine::square_board;
 
+using gauss_key_columns_type = Solver<Topology>::gauss_key_columns_type;
+
 struct SquareFixture {
     
 };
@@ -327,7 +329,7 @@ TEST(SqureSolver, Porabablities_Corner_3) {
 
     Solver<Topology> s(t);
     Solver<Topology>::index_porapablities expected =
-    {{{0,1}, 1}, {{1,1}, 1}, {{1,0}, 1} };
+    {{{0,1}, {1,1}}, {{1,1}, {1,1}}, {{1,0}, {1,1}} };
 
     EXPECT_EQ(expected, s.probablities(t, data));
 }
@@ -362,8 +364,8 @@ TEST(SqureSolver, Porabablities_Side3_1) {
 
     Solver<Topology> s(t);
     Solver<Topology>::index_porapablities expected =
-    {{{0,0}, 1}, {{0,1}, 1},
-    {{3,0}, 0}, {{3,1}, 0},
+    {{{0,0}, {1,1}}, {{0,1}, {1,1}},
+    {{3,0}, {0,1}}, {{3,1}, {0,1}},
     {{1,1}, {1,2}}, {{2,1}, {1,2}}};
 
     EXPECT_EQ(expected, s.probablities(t, data));
@@ -382,8 +384,8 @@ TEST(Solver, Porabablities_Zero) {
 
     Solver<Topology> s(t);
     Solver<Topology>::index_porapablities expected =
-    {{{0,1}, 0},
-    {{1,0}, 0}, {{1,1}, 0}};
+    {{{0,1}, {0,1}},
+    {{1,0}, {0,1}}, {{1,1}, {0,1}}};
 
     EXPECT_EQ(expected, s.probablities(t, data));
 }
@@ -414,7 +416,7 @@ TEST(Solver, Porabablities_unknown_simpe) {
     data.totalBombCount = 2;
 
     Solver<Topology> s(t);
-    Solver<Topology>::index_porapablities expected = {{{0,0}, 1}, {{1,0}, 1}};
+    Solver<Topology>::index_porapablities expected = {{{0,0}, {1,1}}, {{1,0}, {1,1}}};
 
     EXPECT_EQ(expected, s.probablities(t, data));
 }
@@ -430,7 +432,7 @@ TEST(Solver, Porabablities_unknown_simpe_2) {
     data.totalBombCount = 1;
 
     Solver<Topology> s(t);
-    Solver<Topology>::index_porapablities expected = {{{0,0}, 0}, {{1,0}, 1}};
+    Solver<Topology>::index_porapablities expected = {{{0,0}, {0,1}}, {{1,0}, {1,1}}};
 
     EXPECT_EQ(expected, s.probablities(t, data));
 }
@@ -446,7 +448,7 @@ TEST(Solver, Porabablities_unknown_simpe_3) {
     data.totalBombCount = 2;
 
     Solver<Topology> s(t);
-    Solver<Topology>::index_porapablities expected = {{{1,0}, 1}, {{2,0}, {1,3}}, {{3,0}, {1,3}}, {{4,0}, {1,3}}};
+    Solver<Topology>::index_porapablities expected = {{{1,0}, {1,1}}, {{2,0}, {1,3}}, {{3,0}, {1,3}}, {{4,0}, {1,3}}};
 
     EXPECT_EQ(expected, s.probablities(t, data));
 }
@@ -533,14 +535,20 @@ TEST(Solver, gauss) {
 
     Solver<Topology> s(8);
 
-    EXPECT_EQ(expected, s.gauss(e));
-    EXPECT_EQ(s.specter(e), s.specter(s.gauss(e)));
+    EXPECT_EQ(std::make_pair(expected, gauss_key_columns_type{0, 2}), s.gauss(e));
+    EXPECT_EQ(s.specter(e), s.specter(s.gauss(e).first));
 }
 
 /**
  * x1 + x2           = 1
  * x1 + x2 + x3 + x4 = 3
  *      x2           = 1
+ *
+ * should become
+ *
+ * x1               = 1
+ *      x2          = 1
+ *          x3 + x4 = 2
  */
 TEST(Solver, gauss_2) {
     Equations e(3, 4);
@@ -554,17 +562,35 @@ TEST(Solver, gauss_2) {
     e._bound(3) = 1;
 
 
-    Equations expected(2, 4);
-    expected._A(0,0) = 1; expected._A(0,1) = 1;
-    expected._A(1,2) = 1; expected._A(1,3) = 1;
+    Equations expected(3, 4);
+    expected._A(0,0) = expected._A(1,1) = expected._A(2,2) = expected._A(2,3) = 1;
 
-    expected._b(0) = 1;
+    expected._b(0) = 0;
     expected._b(1) = 1;
+    expected._b(2) = 2;
 
     expected._bound = e._bound;
 
     Solver<Topology> s(8);
 
-    EXPECT_EQ(expected, s.gauss(e));
-    EXPECT_EQ(s.specter(e), s.specter(s.gauss(e)));
+    EXPECT_EQ(std::make_pair(expected, gauss_key_columns_type{0, 1, 2}), s.gauss(e));
+    EXPECT_EQ(s.specter(e), s.specter(s.gauss(e).first));
+}
+
+/**
+ * 1..1
+ */
+TEST(Solver, decompose) {
+    Topology t(4, 1);
+
+    PlayerBoardData<Topology> p;
+    p.setOpened({0,0}, 1);
+    p.setOpened({3, 0}, 1);
+    p.totalBombCount = 2;
+
+    Solver<Topology> s(t);
+
+    std::vector<Solver<Topology>::mapped_equations_type> expected;
+
+    EXPECT_EQ(expected, s.decompose(s.parseBoard(t, p)));
 }

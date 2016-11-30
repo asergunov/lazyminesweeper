@@ -11,6 +11,9 @@
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/vector_proxy.hpp>
 
+#include <boost/range.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+
 namespace minesweeper {
 namespace engine {
 namespace solver {
@@ -28,12 +31,27 @@ struct Solver
 
     typedef Equations::value_type value_type;
     typedef Equations::vector_type value_vector_type;
-    typedef uint_least64_t variation_count_type;
+    typedef boost::multiprecision::cpp_int variation_count_type;
+    typedef boost::rational<variation_count_type> probablity_type;
+
+    static double toDouble(const probablity_type& a) {
+        if(a.denominator() > 100000000000)
+        {
+            auto devider = a.denominator()/1000000;
+            const probablity_type b(a.numerator()/devider, a.denominator()/devider);
+            return b.numerator().convert_to<double>()/b.denominator().convert_to<double>();
+        }
+        return a.numerator().convert_to<double>()/a.denominator().convert_to<double>();
+    }
+
+    typedef boost::numeric::ublas::vector<probablity_type> propbablity_vector_type;
     typedef Equations::bound_type bound_type;
 
-    typedef std::map<index_type, value_type> index_porapablities;
+    typedef std::map<index_type, probablity_type> index_porapablities;
 
-    boost::numeric::ublas::triangular_matrix<bound_type, boost::numeric::ublas::upper> pascal_triangle;
+    typedef std::vector<size_t> gauss_key_columns_type;
+
+    boost::numeric::ublas::triangular_matrix<variation_count_type, boost::numeric::ublas::upper> pascal_triangle;
 
     struct specter_type : public std::vector<std::map<bound_type, variation_count_type>> {
         variation_count_type total;
@@ -211,8 +229,30 @@ struct Solver
         return result;
     }
 
-    size_t gauss_inplace(Equations& equations) {
+    /**
+     * @brief gauss_inplace
+     * @param equations
+     * @return key cells
+     *
+     * perfoms gaussian transform of equation system
+     *
+     * equations becomes upper triangilar
+     * key cells is cells with value of 1. All other cells key columns are 0.
+     * Every nonzero row has only one key cell
+     *
+     * @example
+     * 1 x 0 x x 0 x | x
+     * 0 0 1 x x 0 x | x
+     * 0 0 0 0 0 1 x | x
+     * Key columns are
+     * 0,  2,    5
+     * Free columns are
+     *   1,  3,4,  6
+     */
+    std::pair<Equations, gauss_key_columns_type> gauss(Equations&& equations) {
         using namespace boost::numeric::ublas;
+
+        gauss_key_columns_type key_columns;
 
         auto& A = equations._A;
         size_t colU = 0, colA = 0;
@@ -230,6 +270,7 @@ struct Solver
                 auto mainRow = row(A, colU);
                 const auto k = Equations::matrix_type::value_type(1)/mainRow(colA);
                 equations.multRow(colU, k);
+                key_columns.emplace_back(colA); // put row, column key pair
 
                 for(size_t irow = 0; irow < A.size1(); ++irow) {
                     if(irow == colU)
@@ -241,21 +282,114 @@ struct Solver
                 ++colU;
             }
         }
-        return colU;
+        return {equations, key_columns};
     }
 
-    Equations gauss(const Equations& equations) {
+    std::pair<Equations, gauss_key_columns_type> gauss(const Equations& equations) {
         using namespace boost::numeric::ublas;
 
-        Equations e = equations;
-        auto colU = gauss_inplace(e);
-        return Equations(subrange(e._A, 0, colU, 0, e._A.size2()), subrange(e._b, 0, colU), equations._bound);
+        auto result = gauss(std::move(Equations(equations)));
+        return {Equations(subrange(result.first._A, 0, result.second.size(), 0, result.first._A.size2()),
+                          subrange(result.first._b, 0, result.second.size()),
+                          result.first._bound),
+                    result.second};
     }
 
-    std::vector<mapped_equations_type> decompose(const mapped_equations_type& e) {
+    std::vector<mapped_equations_type> decompose(mapped_equations_type&& e) {
+        auto g = gauss(std::move(e.first));
+        return decompose(g.first, g.second, e.second);
+    }
 
+    std::vector<std::pair<Equations, std::vector<size_t>>> decompose(Equations equations) {
+        auto g = gauss(std::move(equations));
+        return decompose(g.first, g.second);
+    }
 
-        return {};
+    std::vector<std::pair<Equations, std::vector<size_t>>> decompose(const Equations& equations, const gauss_key_columns_type&) {
+        std::vector<std::pair<Equations, std::vector<size_t>>> result;
+
+        std::set<size_t> columns, rows;
+
+        for(size_t i = 0; i < equations.variables_count(); ++i)
+            columns.insert(columns.end(), i);
+
+        for(size_t i = 0; i < equations.count(); ++i)
+            rows.insert(rows.end(), i);
+
+        while (!columns.empty()) {
+            std::set<size_t> connectedRows, connectedColumns;
+
+            // take a first column
+            std::set<size_t> columnsToCheck(columns.begin(), std::next(columns.begin()));
+            while (!columnsToCheck.empty()) {
+                // find dependent rows
+                std::set<size_t> rowsToCheck;
+                for(const auto& columnIndex : columnsToCheck) {
+                    auto found = columns.find(columnIndex);
+                    if(found==columns.end())
+                        continue; // already processed
+
+                    connectedColumns.insert(*found);
+                    columns.erase(found);
+
+                    const auto& colA = column(equations._A, columnIndex);
+                    for(const auto& rowIndex : rows) {
+                        if(colA(rowIndex) != 0)
+                            rowsToCheck.insert(rowIndex);
+                    }
+                }
+                columnsToCheck.clear();
+
+                // find dependent columns
+                for(const auto& rowIndex : rowsToCheck) {
+                    auto found = rows.find(rowIndex);
+                    if(found==rows.end())
+                        continue; // already processed
+
+                    connectedRows.insert(*found);
+                    rows.erase(found);
+
+                    const auto& rowA = row(equations._A, rowIndex);
+                    for(const auto& columnIndex : columns) {
+                        if(rowA(columnIndex) != 0)
+                            columnsToCheck.insert(columnIndex);
+                    }
+                }
+            }
+
+            if(!connectedRows.empty() && !connectedColumns.empty()) {
+                auto e = Equations(connectedRows.size(), connectedColumns.size());
+                std::vector<size_t> m; m.reserve(connectedColumns.size());
+                size_t c = 0;
+                for(const auto& column : connectedColumns) {
+                    m.push_back(column);
+                    size_t r = 0;
+                    for(const auto& row : connectedRows) {
+                        e._A(r, c) = equations._A(row, column);
+                        e._b(r) = equations._b(row);
+                        e._bound(c) = equations._bound(column);
+                        ++r;
+                    }
+                    ++c;
+                }
+                result.emplace_back(e, m);
+            }
+        }
+
+        return result;
+    }
+
+    std::vector<mapped_equations_type> decompose(const Equations& equations, const gauss_key_columns_type& key_columns, const mapping_type& mapping)
+    {
+        std::vector<mapped_equations_type> result;
+        for(const auto& item : decompose(equations, key_columns)) {
+            mapping_type newMapping;
+            for(const auto& m : item.second)
+                newMapping.push_back(mapping[m]);
+
+            result.emplace_back(item.first, newMapping);
+        }
+        return result;
     }
 
     variation_count_type combinations_count(const bound_type& bombs, const bound_type& bound) {
@@ -300,38 +434,79 @@ struct Solver
             return specter_type::fromTrivialValue(x.numerator(), combinations_count(x.numerator(), bound));
         }
 
-        auto minimal_bound = std::min_element(equations._bound.begin(), equations._bound.end());
-        assert(minimal_bound != equations._bound.end());
+        std::vector<specter_type> independentResults;
+        std::vector<std::vector<size_t>> independentMappings;
+        for(const auto& independent: decompose(equations)) {
+            const auto& equations = independent.first;
+            const auto& reindex = independent.second;
+
+            auto minimal_bound = std::min_element(equations._bound.begin(), equations._bound.end());
+            assert(minimal_bound != equations._bound.end());
+
+            specter_type result(equations.variables_count());
+            result.total = 0;
+            for(bound_type b = 0; b<=*minimal_bound; ++b) {
+                const auto reduced_specter = specter(equations.reduced({{minimal_bound.index(), b}}));
+                const auto c = combinations_count(b, *minimal_bound);
+                for(size_t i = 0; i<minimal_bound.index(); ++i) {
+                    const auto& reduced_result_column = reduced_specter[i];
+                    auto& result_column = result[i];
+                    for(const auto& reduced_item : reduced_result_column) {
+                        auto i = result_column.insert({reduced_item.first, 0}).first;
+                        i->second += c*reduced_item.second;
+                    }
+                }
+
+                {
+                    auto& result_column = result[minimal_bound.index()];
+                    result_column.insert({b, c*reduced_specter.total});
+                }
+
+                for(size_t i = minimal_bound.index()+1; i<result.size(); ++i) {
+                    const auto& reduced_result_column = reduced_specter[i-1];
+                    auto& result_column = result[i];
+                    for(const auto& reduced_item : reduced_result_column) {
+                        auto i = result_column.insert({reduced_item.first, 0}).first;
+                        i->second += c*reduced_item.second;
+                    }
+                }
+
+                result.total += reduced_specter.total*c;
+            }
+
+            independentResults.push_back(result);
+            independentMappings.push_back(reindex);
+        }
 
         specter_type result(equations.variables_count());
-        result.total = 0;
-        for(bound_type b = 0; b<=*minimal_bound; ++b) {
-            const auto reduced_specter = specter(equations.reduced({{minimal_bound.index(), b}}));
-            const auto c = combinations_count(b, *minimal_bound);
-            for(size_t i = 0; i<minimal_bound.index(); ++i) {
-                const auto& reduced_result_column = reduced_specter[i];
-                auto& result_column = result[i];
-                for(const auto& reduced_item : reduced_result_column) {
-                    auto i = result_column.insert({reduced_item.first, 0}).first;
-                    i->second += c*reduced_item.second;
+
+        const auto end_result = independentResults.end();
+        auto i_mapping = independentMappings.begin();
+        const auto end_mapping = independentMappings.end();
+
+        for(auto i_result = independentResults.begin(); i_result != end_result; ++i_result, ++i_mapping) {
+
+            variation_count_type mult = 1;
+            for(auto j = independentResults.begin(); j != end_result; ++j) {
+                if(j!=i_result) {
+                    mult*=j->total;
                 }
             }
 
-            {
-                auto& result_column = result[minimal_bound.index()];
-                result_column.insert({b, c*reduced_specter.total});
-            }
-
-            for(size_t i = minimal_bound.index()+1; i<result.size(); ++i) {
-                const auto& reduced_result_column = reduced_specter[i-1];
-                auto& result_column = result[i];
-                for(const auto& reduced_item : reduced_result_column) {
-                    auto i = result_column.insert({reduced_item.first, 0}).first;
-                    i->second += c*reduced_item.second;
+            auto i = i_result->begin();
+            for(const auto index : *i_mapping) {
+                auto& r = result[index];
+                r = *i;
+                for(auto& p : r) {
+                    p.second*=mult;
                 }
+                ++i;
             }
+        }
 
-            result.total += reduced_specter.total*c;
+        result.total = 1;
+        for(auto j = independentResults.begin(); j != end_result; ++j) {
+            result.total*=j->total;
         }
 
         return result;
@@ -393,21 +568,37 @@ struct Solver
         return i->second;
     }
 
-    value_vector_type probablities(const Equations& e) {
-        const auto s = specter(e);
-        value_vector_type result(e.variables_count());
-        auto i_result = result.begin();
-        auto i_bound = e._bound.begin();
+    propbablity_vector_type probablities(const Equations& equations) {
+        propbablity_vector_type consolidated_result(equations.variables_count());
+        for(const auto& independent : decompose(equations))
+        {
+            const auto& e = independent.first;
+            const auto& reindex = independent.second;
 
-        for(auto i = s.begin(); i!= s.end(); ++i, ++i_result, ++i_bound) {
-            *i_result = 0;
-            const auto& bound = *i_bound;
-            for(const auto item : *i) {
-                if(item.first > 0)
-                    *i_result += combinations_count(item.first-1, bound-1)*item.second/combinations_count(item.first, bound);
+            propbablity_vector_type result(equations.variables_count());
+            const auto s = specter(e);
+            auto i_result = result.begin();
+            auto i_bound = e._bound.begin();
+
+            for(auto i = s.begin(); i!= s.end(); ++i, ++i_result, ++i_bound) {
+                *i_result = 0;
+                const auto& bound = *i_bound;
+                for(const auto item : *i) {
+                    if(item.first > 0)
+                        *i_result += combinations_count(item.first-1, bound-1)*item.second/combinations_count(item.first, bound);
+                }
+            }
+            result/=s.total;
+
+            {
+                auto i_result = result.begin();
+                for(const auto& index : reindex) {
+                    consolidated_result[index] = *i_result;
+                    ++i_result;
+                }
             }
         }
-        return  result/s.total;
+        return consolidated_result;
     }
 
     index_porapablities probablities(const topology_type& topology, const player_data_type& data) {

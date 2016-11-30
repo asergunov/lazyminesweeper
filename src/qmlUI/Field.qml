@@ -7,7 +7,7 @@ Rectangle {
 
     signal updateCells();
     function restart() {
-        Field.init(Qt.size(10, 10), 10);
+        Field.init(Qt.size(24, 24), 99);
         updateField();
         grid.forceActiveFocus();
     }
