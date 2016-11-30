@@ -46,9 +46,9 @@ Rectangle {
 
                     var p = Field.minePorabablity(modelIndex);
                     if(p < 0) {
-                        background.color = "lightblue";
+                        background.color = "transparent";
                     } else if(p==0) {
-                        background.color = "green";
+                        background.color = "#7F00FF00";
                     } else if(p==1) {
                         background.color = "red";
                     } else {
