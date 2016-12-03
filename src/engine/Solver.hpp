@@ -307,16 +307,20 @@ struct Solver
         return decompose(g.first, g.second);
     }
 
-    std::vector<std::pair<Equations, std::vector<size_t>>> decompose(const Equations& equations, const gauss_key_columns_type&) {
+    std::vector<std::pair<Equations, std::vector<size_t>>> decompose(const Equations& equations, const gauss_key_columns_type& keys) {
         std::vector<std::pair<Equations, std::vector<size_t>>> result;
 
-        std::set<size_t> columns, rows;
 
-        for(size_t i = 0; i < equations.variables_count(); ++i)
-            columns.insert(columns.end(), i);
+        auto generateSet = [](size_t begin, size_t end) {
+            std::set<size_t> result;
+            for(size_t i = begin; i < end; ++i)
+                result.insert(result.end(), i);
+            return  result;
+        };
 
-        for(size_t i = 0; i < equations.count(); ++i)
-            rows.insert(rows.end(), i);
+        std::set<size_t>
+                columns = generateSet(0, equations.variables_count()),
+                rows = generateSet(0, keys.size());
 
         while (!columns.empty()) {
             std::set<size_t> connectedRows, connectedColumns;
