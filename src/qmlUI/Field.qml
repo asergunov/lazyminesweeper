@@ -7,7 +7,7 @@ Rectangle {
 
     signal updateCells();
     function restart() {
-        Field.init(Qt.size(24, 24), 99);
+        Field.init(Qt.size(50, 30), 300);
         updateField();
         grid.forceActiveFocus();
     }
@@ -17,6 +17,12 @@ Rectangle {
     }
 
     Component.onCompleted: restart();
+
+    Connections {
+        target: Field;
+        onProbablitiesChanged: main.updateField();
+        onValuesChanged: main.updateField();
+    }
 
     Grid {
         focus: true;
@@ -42,6 +48,7 @@ Rectangle {
                     if(value >= 0) {
                         console.debug("value:"+value+" at "+modelIndex);
                         background.color = "transparent";
+                        return;
                     }
 
                     var p = Field.minePorabablity(modelIndex);
@@ -84,7 +91,6 @@ Rectangle {
 
                 Keys.onSpacePressed: {
                     Field.click(modelIndex);
-                    main.updateField();
                 }
 
                 MouseArea {
