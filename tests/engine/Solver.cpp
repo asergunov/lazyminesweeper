@@ -3,6 +3,8 @@
 #include <SquareBoard.hpp>
 #include <Solver.hpp>
 
+#include <PrivateBoardData.hpp>
+
 using namespace minesweeper::engine::solver;
 using namespace minesweeper::engine::square_board;
 
@@ -593,4 +595,29 @@ TEST(Solver, decompose) {
     std::vector<Solver<Topology>::mapped_equations_type> expected;
 
     EXPECT_EQ(expected, s.decompose(s.parseBoard(t, p)));
+}
+
+/**
+ * 1..1
+ */
+TEST(Solver, trivialBigOne) {
+    Topology t(30, 30);
+
+    PrivateBoardData<Topology> priv;
+    priv.generate(t, 100);
+    PlayerBoardData<Topology> player;
+
+    for(const auto& index : t) {
+        if(priv.isBombAt(index))
+            continue;
+
+        priv.openField(player, index, t);
+    }
+
+    Solver<Topology> s(t);
+    s.probablities(t, player);
+
+    std::vector<Solver<Topology>::mapped_equations_type> expected;
+
+
 }
