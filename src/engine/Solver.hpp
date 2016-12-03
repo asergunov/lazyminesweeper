@@ -84,7 +84,8 @@ struct Solver
         static specter_type fromTrivialValue(const bound_type& value, const variation_count_type& count) {
             specter_type r(1);
             r.total = count;
-            r[0].insert({value, count});
+            if(count != 0)
+                r[0].insert({value, count});
             return r;
         }
     }; // specter[column][value] = variant_count
@@ -504,6 +505,15 @@ struct Solver
             auto i = i_result->begin();
             for(const auto index : *i_mapping) {
                 auto& r = result[index];
+
+                // remove imposible values
+                for(auto j = begin(r); j != end(r); ) {
+                    if(j->second == 0)
+                        j = r.erase(j);
+                    else
+                        ++j;
+                }
+
                 r = *i;
                 for(auto& p : r) {
                     p.second*=mult;
