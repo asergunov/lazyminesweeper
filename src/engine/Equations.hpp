@@ -220,6 +220,8 @@ struct Equations {
      * row[changed] += row[other]*k;
      */
     void addRow(size_t changed, size_t other, const value_type& k) {
+        if(k==0)
+            return;
         auto changedRow = row(_A, changed);
         const auto otherRow = row(_A, other);
 
