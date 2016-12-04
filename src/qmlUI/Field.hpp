@@ -30,7 +30,7 @@ public:
         PlayerData player_data;
         PrivateData private_data;
         Solver solver;
-        Solver::IntermediateData Intermediate;
+        Solver::IntermediateData intermediate;
 
         Solver::index_porapablities porapablities;
         size_t porapablitiesVersion = 0;
@@ -61,6 +61,7 @@ public:
     Q_INVOKABLE qreal minePorabablity(const QPoint& index) const;
     Q_INVOKABLE int bombsNearCount(const QPoint& index) const;
     Q_INVOKABLE void click(const QPoint& index);
+    Q_INVOKABLE void douleClick(const QPoint& index);
 
 
     bool isSolverRunning() const

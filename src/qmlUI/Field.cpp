@@ -48,7 +48,7 @@ void Field::sceduleProbablityUpdate()
     const auto data = _data;
     const auto player_data = _data->player_data;
     const auto version = ++_data->lastSceduledPorapablitiesVersion;
-    auto Intermediate = _data->Intermediate;
+    auto Intermediate = _data->intermediate;
     _scedule = [data, player_data, version, Intermediate, this]() mutable {
         auto porapablities = data->solver.probablities(data->topology, player_data, Intermediate);
         run_in_thread(this->thread(), [&]{
@@ -60,7 +60,7 @@ void Field::sceduleProbablityUpdate()
             if(_data->porapablitiesVersion < version) {
                 _data->porapablities = std::move(porapablities);
                 _data->porapablitiesVersion = version;
-                _data->Intermediate.merge(Intermediate);
+                _data->intermediate.merge(Intermediate);
 
                 emit this->probablitiesChanged();
 
@@ -159,6 +159,29 @@ void Field::click(const QPoint &index)
     emit valuesChanged();
 
     sceduleProbablityUpdate();
+}
+
+void Field::douleClick(const QPoint &_index)
+{
+    const auto& index = toIndex(_index);
+    const auto& opened = _data->player_data.openedItems();
+    const auto i = opened.find(index);
+
+    if(i==opened.end())
+        return;
+
+    bool changed = false;
+    for(const auto& ni : _data->topology.neighbours(index)) {
+        if(_data->intermediate.isClear(ni) && !_data->player_data.isOpened(ni)) {
+            _data->private_data.openField(_data->player_data, ni, _data->topology);
+            changed = true;
+        }
+    }
+
+    if(changed) {
+        emit valuesChanged();
+        sceduleProbablityUpdate();
+    }
 }
 
 bool Field::isSolverRunning() const

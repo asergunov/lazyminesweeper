@@ -97,8 +97,11 @@ Rectangle {
                     anchors.fill: parent;
                     onClicked: {
                         Field.click(modelIndex);
-                        main.updateField();
                     }
+                    onDoubleClicked: {
+                        Field.douleClick(modelIndex);
+                    }
+
                     hoverEnabled: true;
                     onEntered: console.log(Field.minePorabablity(modelIndex));
                 }
