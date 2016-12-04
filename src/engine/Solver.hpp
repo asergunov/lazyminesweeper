@@ -48,12 +48,6 @@ struct Solver
     typedef Specter<bound_type, variation_count_type> specter_type;
 
     static double toDouble(const probablity_type& a) {
-        if(a.denominator() > 100000000000)
-        {
-            auto devider = a.denominator()/1000000;
-            const probablity_type b(a.numerator()/devider, a.denominator()/devider);
-            return b.numerator().convert_to<double>()/b.denominator().convert_to<double>();
-        }
         return a.numerator().convert_to<double>()/a.denominator().convert_to<double>();
     }
 
