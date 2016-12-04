@@ -56,7 +56,7 @@ struct Solver
     /**
      * @brief data from previouse iteraqiton to reuse
      */
-    struct IntermidiateData {
+    struct IntermediateData {
         //map<index_set_type, neighbour_count_type> known_values;
         index_set_type bombs;
         index_set_type clear;
@@ -69,7 +69,7 @@ struct Solver
             return bombs.end() != bombs.find(i);
         }
 
-        void merge(const IntermidiateData& other) {
+        void merge(const IntermediateData& other) {
             auto merge_sets = [](index_set_type& out, const index_set_type& other) {
                 auto i_out = begin(out);
                 auto i_other = begin(other);
@@ -115,8 +115,8 @@ struct Solver
         }
     };
 
-    std::map<Equations, variation_count_type, EquationsOrder> cache_number_of_solutions;
-    std::map<Equations, specter_type, EquationsOrder> cache_specter;
+    //std::map<Equations, variation_count_type, EquationsOrder> cache_number_of_solutions;
+    //std::map<Equations, specter_type, EquationsOrder> cache_specter;
 
     Solver(const size_t& max_group_size)
         :pascal_triangle(max_group_size+1, max_group_size+1) {
@@ -135,12 +135,12 @@ struct Solver
     {
     }
 
-    mapped_equations_type parseBoard(const topology_type& topology, const player_data_type& data) {
-        IntermidiateData intermidiate;
-        return parseBoard(topology, data, intermidiate);
+    mapped_equations_type parseBoard(const topology_type& topology, const player_data_type& data) const {
+        IntermediateData Intermediate;
+        return parseBoard(topology, data, Intermediate);
     }
 
-    mapped_equations_type parseBoard(const topology_type& topology, const player_data_type& data, IntermidiateData& intermidiate) {
+    mapped_equations_type parseBoard(const topology_type& topology, const player_data_type& data, IntermediateData& Intermediate) const {
         auto restCells = data.unknownCells(topology);
 
         std::map<index_type, std::set<index_type> > closed_to_neghbour_opened; ///< index -> neghbour opened items
@@ -152,7 +152,7 @@ struct Solver
         using opened_item_data_map_type = std::map<index_type, opened_item_data_type>;
         opened_item_data_map_type opened_item_data;
 
-        // scan opened item. filling up neighbours and correccting with intermidiate data
+        // scan opened item. filling up neighbours and correccting with Intermediate data
         for(const auto& item : openedItems) {
             auto i_inserted = opened_item_data.insert({
                 item.first, {
@@ -161,8 +161,8 @@ struct Solver
             }).first;
             for(const auto& neighbour : topology.neighbours(item.first)) {
                 restCells.erase(neighbour);
-                if(!data.isOpened(neighbour) && !intermidiate.isClear(neighbour)) {
-                    if(intermidiate.isBomb(neighbour)) {
+                if(!data.isOpened(neighbour) && !Intermediate.isClear(neighbour)) {
+                    if(Intermediate.isBomb(neighbour)) {
                         --i_inserted->second.bombs_count;
                     } else {
                         closed_to_neghbour_opened[neighbour].insert(item.first);
@@ -231,7 +231,7 @@ struct Solver
         return {equations, mapping};
     }
 
-    Equations orthogonalize(const Equations& equations) {
+    Equations orthogonalize(const Equations& equations) const {
         using namespace boost::numeric::ublas;
         const auto& A = equations._A;
 
@@ -281,7 +281,7 @@ struct Solver
      * Free columns are
      *   1,  3,4,  6
      */
-    std::pair<Equations, gauss_key_columns_type> gauss(Equations&& equations) {
+    std::pair<Equations, gauss_key_columns_type> gauss(Equations&& equations) const {
         using namespace boost::numeric::ublas;
 
         gauss_key_columns_type key_columns;
@@ -317,7 +317,7 @@ struct Solver
         return {equations, key_columns};
     }
 
-    std::pair<Equations, gauss_key_columns_type> gauss(const Equations& equations) {
+    std::pair<Equations, gauss_key_columns_type> gauss(const Equations& equations) const {
         using namespace boost::numeric::ublas;
 
         auto result = gauss(std::move(Equations(equations)));
@@ -327,17 +327,17 @@ struct Solver
                     result.second};
     }
 
-    std::vector<mapped_equations_type> decompose(mapped_equations_type&& e) {
+    std::vector<mapped_equations_type> decompose(mapped_equations_type&& e) const {
         auto g = gauss(std::move(e.first));
         return decompose(g.first, g.second, e.second);
     }
 
-    std::vector<std::pair<Equations, std::vector<size_t>>> decompose(Equations equations) {
+    std::vector<std::pair<Equations, std::vector<size_t>>> decompose(Equations equations) const {
         auto g = gauss(std::move(equations));
         return decompose(g.first, g.second);
     }
 
-    std::vector<std::pair<Equations, std::vector<size_t>>> decompose(const Equations& equations, const gauss_key_columns_type& keys) {
+    std::vector<std::pair<Equations, std::vector<size_t>>> decompose(const Equations& equations, const gauss_key_columns_type& keys) const {
         std::vector<std::pair<Equations, std::vector<size_t>>> result;
 
 
@@ -415,7 +415,7 @@ struct Solver
         return result;
     }
 
-    std::vector<mapped_equations_type> decompose(const Equations& equations, const gauss_key_columns_type& key_columns, const mapping_type& mapping)
+    std::vector<mapped_equations_type> decompose(const Equations& equations, const gauss_key_columns_type& key_columns, const mapping_type& mapping) const
     {
         std::vector<mapped_equations_type> result;
         for(const auto& item : decompose(equations, key_columns)) {
@@ -428,20 +428,21 @@ struct Solver
         return result;
     }
 
-    variation_count_type combinations_count(const bound_type& bombs, const bound_type& bound) {
+    variation_count_type combinations_count(const bound_type& bombs, const bound_type& bound) const {
         assert(bound >= bombs);
         return pascal_triangle(bombs, bound);
     }
 
-    specter_type specter(const Equations& equations) {
-        auto i = cache_specter.find(equations);
-        if(i == cache_specter.end()) {
-            i = cache_specter.emplace(equations, specter_no_cahce(equations)).first;
-        }
-        return i->second;
+    specter_type specter(const Equations& equations) const {
+        return specter_no_cahce(equations);
+//        auto i = cache_specter.find(equations);
+//        if(i == cache_specter.end()) {
+//            i = cache_specter.emplace(equations, specter_no_cahce(equations)).first;
+//        }
+//        return i->second;
     }
 
-    specter_type specter_no_cahce(const Equations& equations) {
+    specter_type specter_no_cahce(const Equations& equations) const {
         if(equations.variables_count() == 0) {
             return std::all_of(equations._b.begin(), equations._b.end(), [](const value_type& v){
                 return v == 0;
@@ -564,7 +565,7 @@ struct Solver
         return result;
     }
 
-    variation_count_type number_of_solutions(const Equations& equations) {
+    variation_count_type number_of_solutions(const Equations& equations) const {
         if(equations.variables_count() == 0) {
             return std::all_of(equations._b.begin(), equations._b.end(), [](const value_type& v){
                 return v == 0;
@@ -611,16 +612,17 @@ struct Solver
         return result;
     }
 
-    variation_count_type number_of_solutions_caching(const Equations& equations) {
-        auto i = cache_number_of_solutions.find(equations);
-        if(i == cache_number_of_solutions.end()) {
-            i = cache_number_of_solutions.insert({equations, number_of_solutions(equations)}).first;
-        }
+    variation_count_type number_of_solutions_caching(const Equations& equations) const {
+        return number_of_solutions(equations);
+//        auto i = cache_number_of_solutions.find(equations);
+//        if(i == cache_number_of_solutions.end()) {
+//            i = cache_number_of_solutions.insert({equations, number_of_solutions(equations)}).first;
+//        }
 
-        return i->second;
+//        return i->second;
     }
 
-    propbablity_vector_type probablities(const Equations& equations) {
+    propbablity_vector_type probablities(const Equations& equations) const {
         propbablity_vector_type consolidated_result(equations.variables_count());
         for(const auto& independent : decompose(equations))
         {
@@ -650,24 +652,27 @@ struct Solver
                 }
             }
         }
+        assert(all_of(begin(consolidated_result), end(consolidated_result), [&](const probablity_type& p){
+            return p >= 0 && p <= 1;
+        }));
         return consolidated_result;
     }
 
     index_porapablities probablities(const topology_type& topology, const player_data_type& data) {
-        IntermidiateData intermidiate;
-        return probablities(topology, data, intermidiate);
+        IntermediateData Intermediate;
+        return probablities(topology, data, Intermediate);
     }
 
-    index_porapablities probablities(const topology_type& topology, const player_data_type& data, IntermidiateData& intermidiate) {
-        const auto& e = parseBoard(topology, data, intermidiate);
+    index_porapablities probablities(const topology_type& topology, const player_data_type& data, IntermediateData& Intermediate) const {
+        const auto& e = parseBoard(topology, data, Intermediate);
         const auto& porabablities = probablities(e.first);
 
         index_porapablities result;
 
-        for(const auto& index : intermidiate.bombs)
+        for(const auto& index : Intermediate.bombs)
             result[index] = 1;
 
-        for(const auto& index : intermidiate.clear)
+        for(const auto& index : Intermediate.clear)
             result[index] = 0;
 
         auto i_mapping = e.second.begin();
@@ -679,11 +684,11 @@ struct Solver
 
             if((*i_porabablities) == 1) {
                 for(const auto& index : *i_mapping) {
-                    intermidiate.bombs.insert(index);
+                    Intermediate.bombs.insert(index);
                 }
             } else if (*i_porabablities == 0) {
                 for(const auto& index : *i_mapping) {
-                    intermidiate.clear.insert(index);
+                    Intermediate.clear.insert(index);
                 }
             }
         }
