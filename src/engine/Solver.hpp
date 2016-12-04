@@ -76,11 +76,14 @@ struct Solver
                 const auto end_out = end(out);
                 const auto end_other = end(other);
 
-                for(;i_other != end_other; ++i_other) {
+                for(;i_other != end_other;) {
                     if(i_out == end_out || out.key_comp()(*i_other, *i_out)) {
                         out.insert(i_out, *i_other);
+                        ++i_other;
                     } else if(out.key_comp()(*i_out, *i_other)) {
                         i_out++;
+                    } else {
+                        ++i_other;
                     }
                 }
             };
