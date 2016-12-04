@@ -618,6 +618,29 @@ TEST(Solver, trivialBigOne) {
     s.probablities(t, player);
 
     std::vector<Solver<Topology>::mapped_equations_type> expected;
+}
 
+/**
+ * .....
+ * .111.
+ * .1*1.
+ * .111.
+ * .....
+ */
 
+TEST(Solver, oneFreeBomb) {
+    Topology t(5,5);
+    PrivateBoardData<Topology> priv;
+    priv.bombs={{2,2}};
+    PlayerBoardData<Topology> player;
+
+    priv.openField(player, {0,0}, t);
+
+    EXPECT_EQ(1, player.totalBombCount);
+    EXPECT_LE(8, player._openedItems.size());
+
+    Solver<Topology> s(t);
+    const auto parsed = s.parseBoard(t, player);
+    std::cout << (testing::Message() << parsed.first).GetString();
+    EXPECT_GE(2, parsed.first.count());
 }
