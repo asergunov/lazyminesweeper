@@ -7,6 +7,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include <mutex>
 
 #include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
@@ -118,8 +119,11 @@ struct Solver
         }
     };
 
-    //std::map<Equations, variation_count_type, EquationsOrder> cache_number_of_solutions;
-    //std::map<Equations, specter_type, EquationsOrder> cache_specter;
+    mutable mutex cache_number_of_solutions_mutex;
+    mutable std::map<Equations, variation_count_type, EquationsOrder> cache_number_of_solutions;
+
+    mutable mutex cache_specter_mutex;
+    mutable std::map<Equations, specter_type, EquationsOrder> cache_specter;
 
     Solver(const size_t& max_group_size)
         :pascal_triangle(max_group_size+1, max_group_size+1) {
@@ -226,7 +230,7 @@ struct Solver
 
         // fill up the total bombs column
         std::fill_n((equations._A.begin1()+rows.size()).begin(), opened_items_to_closed_group.size()+1, 1);
-        equations._b(rows.size()) = data.totalBombCount;
+        equations._b(rows.size()) = data.totalBombCount-Intermediate.bombs.size();
         equations._bound(opened_items_to_closed_group.size()) = restCells.size();
         mapping.push_back(restCells); // empty set to indicate the rest
 
@@ -437,12 +441,15 @@ struct Solver
     }
 
     specter_type specter(const Equations& equations) const {
-        return specter_no_cahce(equations);
-//        auto i = cache_specter.find(equations);
-//        if(i == cache_specter.end()) {
-//            i = cache_specter.emplace(equations, specter_no_cahce(equations)).first;
-//        }
-//        return i->second;
+        unique_lock<mutex> lock(cache_specter_mutex);
+        auto i = cache_specter.find(equations);
+        if(i == cache_specter.end()) {
+            lock.unlock();
+            auto result = specter_no_cahce(equations);
+            lock.lock();
+            i = cache_specter.emplace(equations, result).first;
+        }
+        return i->second;
     }
 
     specter_type specter_no_cahce(const Equations& equations) const {
@@ -616,13 +623,16 @@ struct Solver
     }
 
     variation_count_type number_of_solutions_caching(const Equations& equations) const {
-        return number_of_solutions(equations);
-//        auto i = cache_number_of_solutions.find(equations);
-//        if(i == cache_number_of_solutions.end()) {
-//            i = cache_number_of_solutions.insert({equations, number_of_solutions(equations)}).first;
-//        }
+        unique_lock<mutex> lock(cache_number_of_solutions_mutex);
+        auto i = cache_number_of_solutions.find(equations);
+        if(i == cache_number_of_solutions.end()) {
+            lock.unlock();
+            auto result = number_of_solutions(equations);
+            lock.lock();
+            i = cache_number_of_solutions.insert({equations, result}).first;
+        }
 
-//        return i->second;
+        return i->second;
     }
 
     propbablity_vector_type probablities(const Equations& equations) const {
