@@ -18,21 +18,33 @@ namespace minesweeper {
 namespace engine {
 namespace solver {
 
+using namespace std;
+
 template <typename T>
 struct Solver
 {
+
     typedef T topology_type;
     typedef PlayerBoardData<topology_type> player_data_type;
     typedef typename topology_type::index_type index_type;
     typedef typename topology_type::neighbour_count_type neighbour_count_type;
-
-    typedef std::vector<std::set<index_type>> mapping_type;
+    using index_set_type = std::set<index_type>;
+    using mapping_type = std::vector<index_set_type>;
     typedef std::pair<Equations, mapping_type> mapped_equations_type;
 
     typedef Equations::value_type value_type;
     typedef Equations::vector_type value_vector_type;
     typedef boost::multiprecision::cpp_int variation_count_type;
     typedef boost::rational<variation_count_type> probablity_type;
+
+    typedef boost::numeric::ublas::vector<probablity_type> propbablity_vector_type;
+    typedef Equations::bound_type bound_type;
+
+    typedef std::map<index_type, probablity_type> index_porapablities;
+
+    typedef std::vector<size_t> gauss_key_columns_type;
+
+    typedef Specter<bound_type, variation_count_type> specter_type;
 
     static double toDouble(const probablity_type& a) {
         if(a.denominator() > 100000000000)
@@ -44,21 +56,7 @@ struct Solver
         return a.numerator().convert_to<double>()/a.denominator().convert_to<double>();
     }
 
-    typedef boost::numeric::ublas::vector<probablity_type> propbablity_vector_type;
-    typedef Equations::bound_type bound_type;
-
-    typedef std::map<index_type, probablity_type> index_porapablities;
-
-    typedef std::vector<size_t> gauss_key_columns_type;
-
-    typedef Specter<bound_type, variation_count_type> specter_type;
     boost::numeric::ublas::triangular_matrix<variation_count_type, boost::numeric::ublas::upper> pascal_triangle;
-
-
-        {
-
-        }
-
 
 
         }
