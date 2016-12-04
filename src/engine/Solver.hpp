@@ -2,6 +2,7 @@
 
 #include "Equations.hpp"
 #include "PlayerBoardData.hpp"
+#include "Specter.hpp"
 
 #include <set>
 #include <map>
@@ -58,10 +59,22 @@ struct Solver
 
     boost::numeric::ublas::triangular_matrix<variation_count_type, boost::numeric::ublas::upper> pascal_triangle;
 
+    /**
+     * @brief data from previouse iteraqiton to reuse
+     */
+    struct IntermidiateData {
+        map<index_set_type, neighbour_count_type> known_values;
+        index_set_type bombs;
+        index_set_type clear;
 
+        bool isClear(const index_type& i) const {
+            return clear.end() != clear.find(i);
         }
 
+        bool isBomb(const index_type& i) const {
+            return bombs.end() != bombs.find(i);
         }
+    };
 
     struct EquationsOrder {
         bool operator()(const Equations::vector_type& a, const Equations::vector_type& b) const {
@@ -109,65 +122,95 @@ struct Solver
     }
 
     mapped_equations_type parseBoard(const topology_type& topology, const player_data_type& data) {
-        struct opened_item_data_type {
-            size_t row;
-            neighbour_count_type bombs_count;
-        };
+        IntermidiateData intermidiate;
+        return parseBoard(topology, data, intermidiate);
+    }
 
+    mapped_equations_type parseBoard(const topology_type& topology, const player_data_type& data, IntermidiateData& intermidiate) {
         auto restCells = data.unknownCells(topology);
 
-        std::map<index_type, opened_item_data_type> opened_item_data;
-        std::map<index_type, std::set<index_type> > groups_coloring; ///< index -> neghbour opened items
-        std::set<index_type> zeros;
+        std::map<index_type, std::set<index_type> > closed_to_neghbour_opened; ///< index -> neghbour opened items
         const auto& openedItems = data.openedItems();
 
-        for(const auto& item : openedItems) {
-            if(item.second == 0) {
-                zeros.insert(item.first);
-            }
-        }
+        struct opened_item_data_type {
+            neighbour_count_type bombs_count;
+        };
+        using opened_item_data_map_type = std::map<index_type, opened_item_data_type>;
+        opened_item_data_map_type opened_item_data;
 
+        // scan opened item. filling up neighbours and correccting with intermidiate data
         for(const auto& item : openedItems) {
-            opened_item_data.insert({item.first, {opened_item_data.size(), static_cast<neighbour_count_type>(item.second)}});
+            auto i_inserted = opened_item_data.insert({
+                item.first, {
+                    static_cast<neighbour_count_type>(item.second)
+                }
+            }).first;
             for(const auto& neighbour : topology.neighbours(item.first)) {
                 restCells.erase(neighbour);
-                if(!data.isOpened(neighbour) && zeros.find(neighbour) == zeros.end()) {
-                    groups_coloring[neighbour].insert(item.first);
+                if(!data.isOpened(neighbour) && !intermidiate.isClear(neighbour)) {
+                    if(intermidiate.isBomb(neighbour)) {
+                        --i_inserted->second.bombs_count;
+                    } else {
+                        closed_to_neghbour_opened[neighbour].insert(item.first);
+                    }
                 }
             }
         }
 
         struct group_data {
-            std::set<index_type> group;
+            set<index_type> group;
             size_t column;
         };
 
-        std::map<std::set<index_type>, group_data > groups; ///< opened items -> group indeces
-        for(const auto& coloring : groups_coloring) {
-            auto result = groups.insert({coloring.second, {{}, groups.size()}});
-            result.first->second.group.insert(coloring.first);
+        // find groups out
+        using group_type = map<set<index_type>, group_data >;
+        group_type opened_items_to_closed_group; ///< opened items -> group indeces
+        for(const auto& coloring : closed_to_neghbour_opened) {
+            const auto i_inserted = opened_items_to_closed_group.insert({coloring.second, {{}, opened_items_to_closed_group.size()}}).first;
+            i_inserted->second.group.insert(coloring.first);
         }
 
-        mapping_type mapping(groups.size());
-        Equations equations(openedItems.size()+1, groups.size()+1);
+        map<std::pair<set<size_t>,neighbour_count_type>, size_t> rows;
+        for(const auto& opened_item : opened_item_data ) {
+            const auto& opened_item_index = opened_item.first;
+            auto opened_item_bombs_count = opened_item.second.bombs_count;
 
+            set<size_t> envolved_columns;
+            for(const auto& item: opened_items_to_closed_group) {
+                const auto& opened_items = item.first;
+                const auto& group_data = item.second;
 
-        for(const auto& opened_item_info: opened_item_data) {
-            equations._b(opened_item_info.second.row) = opened_item_info.second.bombs_count;
+                if(opened_items.find(opened_item_index) == opened_items.end())
+                    continue;
+
+                envolved_columns.insert(group_data.column);
+            }
+
+            if(envolved_columns.empty())
+                continue;
+
+            rows.insert({{move(envolved_columns), move(opened_item_bombs_count)}, rows.size()});
         }
 
-        for(const auto& group_data_item : groups) {
-            mapping[group_data_item.second.column]=group_data_item.second.group;
-            equations._bound(group_data_item.second.column) = group_data_item.second.group.size();
-            for(const auto& opened_index : group_data_item.first) {
-                equations._A(opened_item_data[opened_index].row, group_data_item.second.column)=1;
+        mapping_type mapping(opened_items_to_closed_group.size());
+        Equations equations(rows.size()+1, opened_items_to_closed_group.size()+1);
+
+        for(const auto& row_info: rows) {
+            equations._b(row_info.second) = row_info.first.second;
+            for(const auto& column : row_info.first.first) {
+                equations._A(row_info.second, column)=1;
             }
         }
 
+        for(const auto& group_data_item : opened_items_to_closed_group) {
+            mapping[group_data_item.second.column]=group_data_item.second.group;
+            equations._bound(group_data_item.second.column) = group_data_item.second.group.size();
+        }
+
         // fill up the total bombs column
-        std::fill_n((equations._A.begin1()+openedItems.size()).begin(), groups.size()+1, 1);
-        equations._b(openedItems.size()) = data.totalBombCount;
-        equations._bound(groups.size()) = restCells.size();
+        std::fill_n((equations._A.begin1()+rows.size()).begin(), opened_items_to_closed_group.size()+1, 1);
+        equations._b(rows.size()) = data.totalBombCount;
+        equations._bound(opened_items_to_closed_group.size()) = restCells.size();
         mapping.push_back(restCells); // empty set to indicate the rest
 
 
@@ -597,7 +640,12 @@ struct Solver
     }
 
     index_porapablities probablities(const topology_type& topology, const player_data_type& data) {
-        const auto& e = parseBoard(topology, data);
+        IntermidiateData intermidiate;
+        return probablities(topology, data, intermidiate);
+    }
+
+    index_porapablities probablities(const topology_type& topology, const player_data_type& data, IntermidiateData& intermidiate) {
+        const auto& e = parseBoard(topology, data, intermidiate);
         const auto& porabablities = probablities(e.first);
 
         index_porapablities result;
