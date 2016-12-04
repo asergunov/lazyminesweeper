@@ -48,8 +48,9 @@ void Field::sceduleProbablityUpdate()
     const auto data = _data;
     const auto player_data = _data->player_data;
     const auto version = ++_data->lastSceduledPorapablitiesVersion;
-    _scedule = [data, player_data, version, this]() {
-        auto porapablities = data->solver.probablities(data->topology, player_data);
+    auto intermidiate = _data->intermidiate;
+    _scedule = [data, player_data, version, intermidiate, this]() mutable {
+        auto porapablities = data->solver.probablities(data->topology, player_data, intermidiate);
         run_in_thread(this->thread(), [&]{
             if(_data != data) {
                 // field was changed
@@ -59,6 +60,7 @@ void Field::sceduleProbablityUpdate()
             if(_data->porapablitiesVersion < version) {
                 _data->porapablities = std::move(porapablities);
                 _data->porapablitiesVersion = version;
+                _data->intermidiate.merge(intermidiate);
 
                 emit this->probablitiesChanged();
 

@@ -30,6 +30,7 @@ public:
         PlayerData player_data;
         PrivateData private_data;
         Solver solver;
+        Solver::IntermidiateData intermidiate;
 
         Solver::index_porapablities porapablities;
         size_t porapablitiesVersion = 0;

@@ -57,7 +57,7 @@ struct Solver
      * @brief data from previouse iteraqiton to reuse
      */
     struct IntermidiateData {
-        map<index_set_type, neighbour_count_type> known_values;
+        //map<index_set_type, neighbour_count_type> known_values;
         index_set_type bombs;
         index_set_type clear;
 
@@ -67,6 +67,26 @@ struct Solver
 
         bool isBomb(const index_type& i) const {
             return bombs.end() != bombs.find(i);
+        }
+
+        void merge(const IntermidiateData& other) {
+            auto merge_sets = [](index_set_type& out, const index_set_type& other) {
+                auto i_out = begin(out);
+                auto i_other = begin(other);
+                const auto end_out = end(out);
+                const auto end_other = end(other);
+
+                for(;i_other != end_other; ++i_other) {
+                    if(i_out == end_out || out.key_comp()(*i_other, *i_out)) {
+                        out.insert(i_out, *i_other);
+                    } else if(out.key_comp()(*i_out, *i_other)) {
+                        i_out++;
+                    }
+                }
+            };
+
+            merge_sets(bombs, other.bombs);
+            merge_sets(clear, other.clear);
         }
     };
 
@@ -644,11 +664,28 @@ struct Solver
 
         index_porapablities result;
 
+        for(const auto& index : intermidiate.bombs)
+            result[index] = 1;
+
+        for(const auto& index : intermidiate.clear)
+            result[index] = 0;
+
         auto i_mapping = e.second.begin();
         auto i_porabablities = porabablities.begin();
         for(; i_porabablities != porabablities.end(); ++i_mapping, ++i_porabablities) {
-            for(const auto& index : *i_mapping)
+            for(const auto& index : *i_mapping) {
                 result[index] = *i_porabablities;
+            }
+
+            if((*i_porabablities) == 1) {
+                for(const auto& index : *i_mapping) {
+                    intermidiate.bombs.insert(index);
+                }
+            } else if (*i_porabablities == 0) {
+                for(const auto& index : *i_mapping) {
+                    intermidiate.clear.insert(index);
+                }
+            }
         }
 
         return result;
