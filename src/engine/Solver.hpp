@@ -51,44 +51,19 @@ struct Solver
 
     typedef std::vector<size_t> gauss_key_columns_type;
 
+    typedef Specter<bound_type, variation_count_type> specter_type;
     boost::numeric::ublas::triangular_matrix<variation_count_type, boost::numeric::ublas::upper> pascal_triangle;
 
-    struct specter_type : public std::vector<std::map<bound_type, variation_count_type>> {
-        variation_count_type total;
 
-        specter_type(const size_t& s)
-            : std::vector<std::map<bound_type, variation_count_type>>(s)
-            , total(0)
         {
 
         }
 
-        static specter_type fromTrivialNone() {
-            specter_type r(0);
-            r.total = 0;
-            return r;
+
+
         }
 
-        static specter_type fromTrivialOne() {
-            specter_type r(0);
-            r.total = 1;
-            return r;
         }
-
-        static specter_type fromTrivialValueNone() {
-            specter_type r(1);
-            r.total = 0;
-            return r;
-        }
-
-        static specter_type fromTrivialValue(const bound_type& value, const variation_count_type& count) {
-            specter_type r(1);
-            r.total = count;
-            if(count != 0)
-                r[0].insert({value, count});
-            return r;
-        }
-    }; // specter[column][value] = variant_count
 
     struct EquationsOrder {
         bool operator()(const Equations::vector_type& a, const Equations::vector_type& b) const {

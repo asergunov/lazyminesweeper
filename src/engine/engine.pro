@@ -17,4 +17,5 @@ HEADERS += \
     Solver.hpp \
     PlayerBoardData.hpp \
     PrivateBoardData.hpp \
-    Equations.hpp
+    Equations.hpp \
+    Specter.hpp
