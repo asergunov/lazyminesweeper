@@ -33,16 +33,15 @@ public:
         Solver::IntermediateData intermediate;
 
         Solver::index_porapablities porapablities;
+
         size_t porapablitiesVersion = 0;
-        size_t lastSceduledPorapablitiesVersion = 0;
-        size_t lastRunPorapablitiesVersion = 0;
+        size_t dataVersion = 1;
 
         Data(size_t w, size_t h, size_t bombs);
     };
 
 private:
     std::shared_ptr<Data> _data;
-    std::function<void()> _scedule;
     std::thread _worker_thread;
     bool m_solverRunning = false;
 
@@ -64,8 +63,7 @@ public:
     Q_INVOKABLE void douleClick(const QPoint& index);
 
 
-    bool isSolverRunning() const
-;
+    bool isSolverRunning() const;
 
 signals:
     void sizeChanged(const QSize&);

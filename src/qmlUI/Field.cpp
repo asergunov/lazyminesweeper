@@ -45,33 +45,7 @@ namespace {
 
 void Field::sceduleProbablityUpdate()
 {
-    const auto data = _data;
-    const auto player_data = _data->player_data;
-    const auto version = ++_data->lastSceduledPorapablitiesVersion;
-    auto Intermediate = _data->intermediate;
-    _scedule = [data, player_data, version, Intermediate, this]() mutable {
-        auto porapablities = data->solver.probablities(data->topology, player_data, Intermediate);
-        run_in_thread(this->thread(), [&]{
-            if(_data != data) {
-                // field was changed
-                return;
-            }
-
-            if(_data->porapablitiesVersion < version) {
-                _data->porapablities = std::move(porapablities);
-                _data->porapablitiesVersion = version;
-                _data->intermediate.merge(Intermediate);
-
-                emit this->probablitiesChanged();
-
-                if(version == _data->lastRunPorapablitiesVersion) {
-                    // that's last sceduled version
-                    setSolverRunning(false);
-                }
-            }
-        });
-    };
-
+    ++_data->dataVersion;
     this->runNextScedule();
 }
 
@@ -80,16 +54,37 @@ void Field::runNextScedule()
     if(isSolverRunning())
         return;
 
-    if(_scedule) {
-        std::function<void()> toRun;
-        std::swap(toRun, _scedule);
-
+    if(_data->dataVersion > _data->porapablitiesVersion) {
         if(_worker_thread.joinable())
             _worker_thread.detach(); // let it die
 
-        _data->lastRunPorapablitiesVersion = _data->lastSceduledPorapablitiesVersion;
+        const auto data = _data;
+        const auto player_data = _data->player_data;
+        auto Intermediate = _data->intermediate;
+        auto version = _data->dataVersion;
+        auto scedule = [data, player_data, version, Intermediate, this]() mutable {
+            auto porapablities = data->solver.probablities(data->topology, player_data, Intermediate);
+            run_in_thread(this->thread(), [&]{
+                if(_data != data) {
+                    // field was changed
+                    return;
+                }
+
+                if(_data->porapablitiesVersion < version) {
+                    _data->porapablities = std::move(porapablities);
+                    _data->porapablitiesVersion = version;
+                    _data->intermediate.merge(Intermediate);
+
+                    emit this->probablitiesChanged();
+
+                    setSolverRunning(false);
+                    runNextScedule();
+                }
+            });
+        };
+
         setSolverRunning(true);
-        _worker_thread =  std::thread(toRun);
+        _worker_thread =  std::thread(scedule);
     }
 }
 
