@@ -50,6 +50,8 @@ private:
     void runNextScedule();
     void setSolverRunning(bool);
 
+    void click(const Field::Topology::index_type& index);
+
 public:
     explicit Field(QObject *parent = 0);
     ~Field();
@@ -61,6 +63,7 @@ public:
     Q_INVOKABLE int bombsNearCount(const QPoint& index) const;
     Q_INVOKABLE void click(const QPoint& index);
     Q_INVOKABLE void douleClick(const QPoint& index);
+    Q_INVOKABLE void makeBestTurn();
 
 
     bool isSolverRunning() const;
@@ -68,7 +71,7 @@ public:
 signals:
     void sizeChanged(const QSize&);
     void probablitiesChanged();
-    void valuesChanged();
+    void valuesChanged(const QPoint& index);
 
     void solverRunningChanged(bool solverRunning);
 };

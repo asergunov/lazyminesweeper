@@ -12,6 +12,10 @@ Rectangle {
         grid.forceActiveFocus();
     }
 
+    function makeBestTurn() {
+        Field.makeBestTurn();
+    }
+
     function updateField() {
         updateCells();
     }
@@ -21,7 +25,6 @@ Rectangle {
     Connections {
         target: Field;
         onProbablitiesChanged: main.updateField();
-        onValuesChanged: main.updateField();
     }
 
     Grid {
@@ -68,6 +71,14 @@ Rectangle {
                 Connections {
                     target: main;
                     onUpdateCells: cell.updateCell();
+                }
+
+                Connections {
+                    target: Field
+                    onValuesChanged: {
+                        if(index == cell.modelIndex)
+                            cell.updateCell();
+                    }
                 }
 
                 Rectangle {

@@ -9,6 +9,10 @@ namespace {
         return {p.x(), p.y()};
     }
 
+    QPoint toPoint(const Field::Topology::index_type& p) {
+        return {p.first, p.second};
+    }
+
     void run_in_thread(QThread* thread, std::function<void()> func) {
       Q_ASSERT(thread->isRunning());
       if(thread == QThread::currentThread())
@@ -102,6 +106,17 @@ void Field::setSolverRunning(bool arg)
 
 }
 
+void Field::click(const minesweeper::engine::square_board::Topology::index_type &index)
+{
+    if(_data->player_data.isOpened(index))
+        return;
+
+    _data->private_data.openField(_data->player_data, index, _data->topology);
+    emit valuesChanged(toPoint(index));
+
+    sceduleProbablityUpdate();
+}
+
 Field::Field(QObject *parent)
     : QObject(parent)
     , _data(new Data(10, 10, 0))
@@ -123,7 +138,8 @@ QSize Field::size() const
 void Field::init(const QSize &size, int bombCount)
 {
     _data.reset(new Data(size.width(), size.height(), bombCount));
-    sceduleProbablityUpdate();
+    setSolverRunning(false);
+    runNextScedule();
     emit sizeChanged(size);
 }
 
@@ -147,13 +163,7 @@ int Field::bombsNearCount(const QPoint &index) const
 
 void Field::click(const QPoint &index)
 {
-    if(_data->player_data.isOpened(toIndex(index)))
-        return;
-
-    _data->private_data.openField(_data->player_data, toIndex(index), _data->topology);
-    emit valuesChanged();
-
-    sceduleProbablityUpdate();
+    click(toIndex(index));
 }
 
 void Field::douleClick(const QPoint &_index)
@@ -165,17 +175,22 @@ void Field::douleClick(const QPoint &_index)
     if(i==opened.end())
         return;
 
-    bool changed = false;
     for(const auto& ni : _data->topology.neighbours(index)) {
         if(_data->intermediate.isClear(ni) && !_data->player_data.isOpened(ni)) {
-            _data->private_data.openField(_data->player_data, ni, _data->topology);
-            changed = true;
+            click(ni);
         }
     }
+}
 
-    if(changed) {
-        emit valuesChanged();
-        sceduleProbablityUpdate();
+void Field::makeBestTurn()
+{
+    if(_data->intermediate.clear.empty()) {
+        // TODO: find lowest probablity
+    } else {
+        auto clear = _data->intermediate.clear; // make a copy
+        for(const auto& index : clear) {
+            click(index);
+        }
     }
 }
 
