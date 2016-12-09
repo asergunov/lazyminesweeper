@@ -6,6 +6,7 @@
 
 int main(int argc, char *argv[])
 {
+    std::srand(unsigned(std::time(0)));
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication app(argc, argv);
 
