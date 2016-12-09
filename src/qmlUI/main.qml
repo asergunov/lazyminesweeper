@@ -11,15 +11,21 @@ ApplicationWindow {
     Field {
         id: field
         anchors.fill: parent
-        width: parent.width
-        height: parent.height
     }
 
-    footer: TabBar {
-        id: tabBar
-        TabButton {
-            id: restartButton
+    footer: RowLayout {
+        Button {
+            text: qsTr("Best turn")
+            onClicked: field.makeBestTurn()
+        }
 
+        Button {
+            text: qsTr("Restart")
+            onClicked: field.restart();
+        }
+
+
+        Text {
             Behavior on text {
                 SequentialAnimation {
                     id: playbanner
@@ -30,8 +36,8 @@ ApplicationWindow {
                 }
             }
 
-            text: Field.solverRunning ? qsTr("Thinking...") : qsTr("Restart")
-            onClicked: field.restart();
+            text: Field.solverRunning ? qsTr("Thinking...") : ""
+            Layout.fillWidth: true
         }
     }
 }
