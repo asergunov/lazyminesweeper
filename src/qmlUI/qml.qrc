@@ -4,5 +4,7 @@
         <file>Page1.qml</file>
         <file>Page1Form.ui.qml</file>
         <file>Field.qml</file>
+        <file>MobileMain.qml</file>
+        <file>MobileMainForm.ui.qml</file>
     </qresource>
 </RCC>
