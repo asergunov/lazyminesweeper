@@ -10,27 +10,14 @@ Item {
 
     layer.enabled: true
 
-    Item {
-        id: background
-        anchors.fill: parent
-        Image {
+    ParalaxFlickable {
+        id: fieldContainer
+
+        image: Image {
             fillMode: Image.PreserveAspectCrop
             source: "ginkaku-ji-temple-kyoto-japan-161247.jpeg"
-
-            //anchors.fill: parent
-
-            property real pralaxStrengh: 0.1
-            property real overshotMargin: 1
-            width: fieldContainer.width*(1+2*overshotMargin*pralaxStrengh) + (pralaxStrengh)*(fieldContainer.contentItem.width-fieldContainer.width)
-            height: fieldContainer.height*(1+2*overshotMargin*pralaxStrengh) + (pralaxStrengh)*(fieldContainer.contentItem.height-fieldContainer.height)
-
-            x: -fieldContainer.width*overshotMargin*pralaxStrengh - fieldContainer.contentX*pralaxStrengh
-            y: -fieldContainer.height*overshotMargin*pralaxStrengh - fieldContainer.contentY*pralaxStrengh
         }
-    }
 
-    Flickable {
-        id: fieldContainer
         anchors.fill: parent
         anchors.topMargin: topPanel.height
 
@@ -49,41 +36,46 @@ Item {
 
                 rows: 30
                 columns: 30
-                spacing: 5
+                spacing: 2
 
                 Repeater {
                     model: grid.rows*grid.columns
                     delegate: Item {
                         id:cell
+                        property int nearBombCount: 4
 
                         width: 30
                         height: 30
 
-                        ColorOverlay {
-                            id: bgDarkner
-                            anchors.fill: parent
-                            source: ShaderEffectSource {
-                                function update() {
-                                    sceduleUpdate();
-                                }
-                                live: false
-                                sourceItem: background
-                                sourceRect: mapToItem(background, 0, 0, cell.width, cell.height)
-                            }
-                            color: "#80ffffff"
-                        }
+//                        ColorOverlay {
+//                            id: bgDarkner
+//                            anchors.fill: parent
+//                            source: ShaderEffectSource {
+//                                live: true
+//                                sourceItem: fieldContainer.background
+//                                sourceRect: mapToItem(fieldContainer.background, 0, 0, cell.width, cell.height)
+//                            }
+//                            color: "#80ffffff"
+//                        }
 
 
-                        FastBlur {
-                            anchors.centerIn: parent
-                            radius: 32
-                            source: bgDarkner
-                        }
+//                        FastBlur {
+//                            anchors.centerIn: parent
+//                            radius: 32
+//                            source: bgDarkner
+//                        }
 
                         Rectangle {
                             anchors.fill: parent
-                            color: "red"
-                            opacity: 0.1
+                            color: "white"
+                            radius: 4
+                            opacity: 0.8
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: nearBombCount
+                            font.bold: true
                         }
                     }
 
@@ -106,8 +98,8 @@ Item {
             id: bgDarkner
             anchors.fill: parent
             source: ShaderEffectSource {
-                sourceItem: background
-                sourceRect: mapToItem(background, 0, 0, topPanel.width, topPanel.height)
+                sourceItem: fieldContainer.background
+                sourceRect: mapToItem(fieldContainer.background, 0, 0, topPanel.width, topPanel.height)
             }
             color: "#10000000"
             visible: false
