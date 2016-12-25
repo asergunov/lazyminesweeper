@@ -6,5 +6,9 @@
         <file>Field.qml</file>
         <file>MobileMain.qml</file>
         <file>ParalaxFlickable.qml</file>
+        <file>MoblileField.qml</file>
+        <file>MobileCell.qml</file>
+        <file>MobileTopPanel.qml</file>
+        <file>MoblieBottomPanel.qml</file>
     </qresource>
 </RCC>

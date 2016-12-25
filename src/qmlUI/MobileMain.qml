@@ -24,115 +24,24 @@ Item {
         contentWidth: field.width
         contentHeight: field.height
 
-        Item {
+        MoblileField {
             id: field
 
-            width: Math.max(grid.width, fieldContainer.width)
-            height: Math.max(grid.height, fieldContainer.height)
+            rows: 10
+            columns: 10
 
-            Grid {
-                anchors.centerIn: parent
-                id: grid
-
-                rows: 30
-                columns: 30
-                spacing: 2
-
-                Repeater {
-                    model: grid.rows*grid.columns
-                    delegate: Item {
-                        id:cell
-                        property int nearBombCount: 4
-
-                        width: 30
-                        height: 30
-
-//                        ColorOverlay {
-//                            id: bgDarkner
-//                            anchors.fill: parent
-//                            source: ShaderEffectSource {
-//                                live: true
-//                                sourceItem: fieldContainer.background
-//                                sourceRect: mapToItem(fieldContainer.background, 0, 0, cell.width, cell.height)
-//                            }
-//                            color: "#80ffffff"
-//                        }
-
-
-//                        FastBlur {
-//                            anchors.centerIn: parent
-//                            radius: 32
-//                            source: bgDarkner
-//                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            color: "white"
-                            radius: 4
-                            opacity: 0.8
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: nearBombCount
-                            font.bold: true
-                        }
-                    }
-
-                }
-
+            cellDelegate: MobileCell {
+                id: cell
             }
 
         }
     }
 
-    Item {
+    MobileTopPanel {
         id: topPanel
-        height: 40
-
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-
-        ColorOverlay {
-            id: bgDarkner
-            anchors.fill: parent
-            source: ShaderEffectSource {
-                sourceItem: fieldContainer.background
-                sourceRect: mapToItem(fieldContainer.background, 0, 0, topPanel.width, topPanel.height)
-            }
-            color: "#10000000"
-            visible: false
-        }
-
-        FastBlur {
-            anchors.fill: parent
-            radius: 32
-            source: bgDarkner
-            //visible: false
-        }
-
-        Frame {
-            width: 30
-            height: 30
-            anchors.centerIn: parent
-            id: bombsRemain
-            Text {
-                text: "99"
-                anchors.centerIn: parent
-            }
-        }
-
     }
 
-    RowLayout {
-        anchors.bottom: parent.bottom
-        Button {
-            id: bestTurnButton
-        }
-
-        Button {
-            id: restartButton
-        }
+    MoblieBottomPanel {
+        id: bottomPanel
     }
 }
