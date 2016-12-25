@@ -17,17 +17,17 @@ Item {
     property alias rows: grid.rows
     property alias columns: grid.columns
 
-    property alias cellDelegate: repeater.delegate
+    property Component cellDelegate : Text {
+        text: "none"
+    }
+    property alias cellsModel: repeater.model
     
-    Grid {
+    GridLayout {
         anchors.centerIn: parent
         id: grid
-        
-        spacing: 2
-        
         Repeater {
-            model: grid.rows*grid.columns
             id: repeater
+            delegate: cellDelegate
         }
         
     }
