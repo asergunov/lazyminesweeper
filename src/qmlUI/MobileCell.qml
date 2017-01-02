@@ -30,6 +30,7 @@ Item {
         anchors.fill: parent
         visible: !flaged && !safe && !opened
         Rectangle {
+            id: probablityBackground
             anchors.fill: parent
             //color: Qt.darker(Qt.rgba(1,1,1,1), 1.0+probablity)
             color: Qt.hsla(0, 0, 1-probablity, 1)
