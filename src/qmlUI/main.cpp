@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 
     Field field;
 
-    engine.rootContext()->setContextProperty("Field", &field);
+    engine.rootContext()->setContextProperty("gameField", &field);
     engine.load(QUrl(QLatin1String("qrc:/main.qml")));
 
     return app.exec();

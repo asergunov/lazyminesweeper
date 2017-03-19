@@ -11,5 +11,9 @@
         <file>MobileTopPanel.qml</file>
         <file>MoblieBottomPanel.qml</file>
         <file>ginkaku-ji-temple-kyoto-japan-161247.jpeg</file>
+        <file>green.svg</file>
+        <file>red.svg</file>
+        <file>glass.svg</file>
+        <file>cell.svg</file>
     </qresource>
 </RCC>

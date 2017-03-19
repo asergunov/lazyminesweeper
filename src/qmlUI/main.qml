@@ -8,36 +8,8 @@ ApplicationWindow {
     height: 480
     title: qsTr("Lazy minesweeper")
 
-    Field {
-        id: field
+    MobileMain {
+        model: gameField;
         anchors.fill: parent
-    }
-
-    footer: RowLayout {
-        Button {
-            text: qsTr("Best turn")
-            onClicked: field.makeBestTurn()
-        }
-
-        Button {
-            text: qsTr("Restart")
-            onClicked: field.restart();
-        }
-
-
-        Text {
-            Behavior on text {
-                SequentialAnimation {
-                    id: playbanner
-                    running: false
-                    NumberAnimation { target: restartButton; property: "opacity"; to: 0.0; duration: 500}
-                    PropertyAction {}
-                    NumberAnimation { target: restartButton; property: "opacity"; to: 1.0; duration: 500}
-                }
-            }
-
-            text: Field.solverRunning ? qsTr("Thinking...") : ""
-            Layout.fillWidth: true
-        }
     }
 }
