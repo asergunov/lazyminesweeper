@@ -536,7 +536,7 @@ struct Solver
 
         const auto end_result = independentResults.end();
         auto i_mapping = independentMappings.begin();
-        const auto end_mapping = independentMappings.end();
+        //const auto end_mapping = independentMappings.end();
 
         for(auto i_result = independentResults.begin(); i_result != end_result; ++i_result, ++i_mapping) {
 

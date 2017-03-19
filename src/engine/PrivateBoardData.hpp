@@ -57,6 +57,7 @@ struct PrivateBoardData {
 
             count_inserter& operator++() {
                 _count++;
+                return *this;
             }
 
             index_type& operator*() {

@@ -12,11 +12,14 @@ namespace square_board {
 using coord_type = int16_t;
 
 struct Index: public std::pair<coord_type, coord_type> {
+    using coord_type = square_board::coord_type;
     Index() {}
     Index(const coord_type& f, const coord_type& s) :pair(f,s) {}
 
     Index operator+(const Index& x) const {
-        return Index{first+x.first, second+x.second};
+        return Index{
+            static_cast<coord_type>(first+x.first),
+            static_cast<coord_type>(second+x.second)};
     }
 
     friend std::ostream& operator << (std::ostream& o, const Index& i) {
@@ -81,7 +84,13 @@ struct Topology {
 
         const_iterator operator+(const size_t& d) {
             const auto t = _index.first*_topology.m_dims.second + _index.second + d;
-            return {{t/_topology.m_dims.second, t%_topology.m_dims.second}, _topology};
+            return {
+                {
+                    static_cast<coord_type>(t/_topology.m_dims.second),
+                    static_cast<coord_type>(t%_topology.m_dims.second)
+                },
+                _topology
+            };
         }
 
         const_iterator& operator++() {

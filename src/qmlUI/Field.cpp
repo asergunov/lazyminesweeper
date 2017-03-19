@@ -6,7 +6,10 @@
 
 namespace {
     Field::Topology::index_type toIndex(const QPoint& p) {
-        return {p.x(), p.y()};
+        return {
+            static_cast<Field::Topology::index_type::coord_type>(p.x()),
+            static_cast<Field::Topology::index_type::coord_type>(p.y())
+        };
     }
 
     QPoint toPoint(const Field::Topology::index_type& p) {
