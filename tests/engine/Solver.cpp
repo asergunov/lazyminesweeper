@@ -590,11 +590,19 @@ TEST(Solver, decompose) {
     p.setOpened({3, 0}, 1);
     p.totalBombCount = 2;
 
-    Solver<Topology> s(t);
+    using SolverType = Solver<Topology>;
+    SolverType s(t);
 
-    std::vector<Solver<Topology>::mapped_equations_type> expected;
+    const auto& result = s.decompose(s.parseBoard(t, p));
+    ASSERT_EQ(3, result.size());
 
-    EXPECT_EQ(expected, s.decompose(s.parseBoard(t, p)));
+    EXPECT_EQ(Equations({1, 1, Equations::value_type(1)}, {1, Equations::value_type(1)}, {1, 1}), result[0].first);
+    EXPECT_EQ(Equations({1, 1, Equations::value_type(1)}, {1, Equations::value_type(1)}, {1, 1}), result[1].first);
+    EXPECT_EQ(Equations({1, 1, Equations::value_type(1)}, {1, Equations::value_type(0)}, {1, 0}), result[2].first);
+
+    EXPECT_EQ(SolverType::mapping_type({{SolverType::index_type(1, 0)}}), result[0].second);
+    EXPECT_EQ(SolverType::mapping_type({{SolverType::index_type(2, 0)}}), result[1].second);
+    EXPECT_EQ(SolverType::mapping_type({{}}), result[2].second);
 }
 
 /**
