@@ -17,9 +17,9 @@ struct PrivateBoardData {
 
     index_set_type bombs;
 
-    void openField(PlayerBoardData<T>& playerData, const index_type& index, const topology_type& topology) const {
+    bool openField(PlayerBoardData<T>& playerData, const index_type& index, const topology_type& topology) const {
         if(playerData.isOpened(index))
-            return;
+            return false;
 
         if(playerData._openedItems.empty())
             playerData.totalBombCount = bombs.size();
@@ -34,6 +34,8 @@ struct PrivateBoardData {
                     openField(playerData, i, topology);
             }
         }
+
+        return true;
     }
 
     bool isBombAt(const index_type& index) const {

@@ -49,7 +49,6 @@ namespace {
 
 void Field::sceduleProbablityUpdate()
 {
-    ++_data->dataVersion;
     this->runNextScedule();
 }
 
@@ -58,37 +57,30 @@ void Field::runNextScedule()
     if(isSolverRunning())
         return;
 
-    if(_data->dataVersion > _data->porapablitiesVersion) {
+    if(_data->isPorabablitiesCalculated()) {
         if(_worker_thread.joinable())
             _worker_thread.detach(); // let it die
 
-        const auto data = _data;
-        const auto player_data = _data->player_data;
-        auto Intermediate = _data->intermediate;
-        auto version = _data->dataVersion;
-        auto scedule = [data, player_data, version, Intermediate, this]() mutable {
-            auto porapablities = data->solver.probablities(data->topology, player_data, Intermediate);
+        setSolverRunning(true);
+
+        _worker_thread =  Data::start_worker(_data, [this](const std::shared_ptr<Data>& data,
+                                              size_t version,
+                                              const Data::IntermediateData& intermediate,
+                                              const Data::index_porapablities& porapablities) {
             run_in_thread(this->thread(), [&]{
                 if(_data != data) {
                     // field was changed
                     return;
                 }
-
-                if(_data->porapablitiesVersion < version) {
-                    _data->porapablities = std::move(porapablities);
-                    _data->porapablitiesVersion = version;
-                    _data->intermediate.merge(Intermediate);
-
+                
+                if(_data->merge_solution(version, intermediate, porapablities)) {
                     emit this->probablitiesChanged();
-
+    
                     setSolverRunning(false);
                     runNextScedule();
                 }
             });
-        };
-
-        setSolverRunning(true);
-        _worker_thread =  std::thread(scedule);
+        });
     }
 }
 
@@ -108,18 +100,17 @@ void Field::setSolverRunning(bool arg)
 
 void Field::click(const minesweeper::engine::square_board::Topology::index_type &index)
 {
-    if(_data->player_data.isOpened(index))
+    if(!_data->openField(index))
         return;
 
-    _data->private_data.openField(_data->player_data, index, _data->topology);
     emit valuesChanged(toPoint(index));
-
     sceduleProbablityUpdate();
 }
 
 Field::Field(QObject *parent)
     : QObject(parent)
     , _data(new Data(10, 10, 0))
+    , _cells(new Cells(this))
 {
 
 }
@@ -132,12 +123,12 @@ Field::~Field()
 
 QSize Field::size() const
 {
-    return {_data->topology.m_dims.first, _data->topology.m_dims.second};
+    return {_data->topology().m_dims.first, _data->topology().m_dims.second};
 }
 
 void Field::init(const QSize &size, int bombCount)
 {
-    _data.reset(new Data(size.width(), size.height(), bombCount));
+    _data = std::make_shared<Data>(size.width(), size.height(), bombCount);
     setSolverRunning(false);
     runNextScedule();
     emit sizeChanged(size);
@@ -145,18 +136,17 @@ void Field::init(const QSize &size, int bombCount)
 
 bool Field::hasFlag(const QPoint &index) const
 {
-    return _data->player_data.hasFlag(toIndex(index));
+    return _data->player().hasFlag(toIndex(index));
 }
 
 qreal Field::minePorabablity(const QPoint &index) const
 {
-    const auto i = _data->porapablities.find(toIndex(index));
-    return i == _data->porapablities.end() ? -1.0 : Solver::toDouble(i->second);
+    return _data->porabablity(toIndex(index));
 }
 
 int Field::bombsNearCount(const QPoint &index) const
 {
-    const auto& opened = _data->player_data.openedItems();
+    const auto& opened = _data->player().openedItems();
     const auto i = opened.find(toIndex(index));
     return i==opened.end() ? -1 : i->second;
 }
@@ -169,42 +159,15 @@ void Field::click(const QPoint &index)
 void Field::douleClick(const QPoint &_index)
 {
     const auto& index = toIndex(_index);
-    const auto& opened = _data->player_data.openedItems();
-    const auto i = opened.find(index);
-
-    if(i==opened.end())
-        return;
-
-    for(const auto& ni : _data->topology.neighbours(index)) {
-        if(_data->intermediate.isClear(ni) && !_data->player_data.isOpened(ni)) {
-            click(ni);
-        }
-    }
+    _data->openAllNear(index);
 }
 
 void Field::makeBestTurn()
 {
-    if(_data->intermediate.clear.empty()) {
-        // TODO: find lowest probablity
-    } else {
-        auto clear = _data->intermediate.clear; // make a copy
-        for(const auto& index : clear) {
-            click(index);
-        }
-    }
+    _data->makeBestTurn();
 }
 
 bool Field::isSolverRunning() const
 {
     return m_solverRunning;
-}
-
-Field::Data::Data(size_t w, size_t h, size_t bombs)
-    : topology(w, h)
-    , player_data()
-    , private_data()
-    , solver(topology)
-{
-    player_data.totalBombCount = bombs;
-    private_data.generate(topology, bombs);
 }

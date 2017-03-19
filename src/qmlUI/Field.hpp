@@ -1,6 +1,8 @@
 #ifndef FIELD_HPP
 #define FIELD_HPP
 
+#include "Cells.hpp"
+
 #include <QObject>
 #include <QSize>
 #include <QPoint>
@@ -10,6 +12,7 @@
 #include "../engine/PlayerBoardData.hpp"
 #include "../engine/PrivateBoardData.hpp"
 #include "../engine/Solver.hpp"
+#include "../engine/Board.hpp"
 
 #include <thread>
 
@@ -18,32 +21,18 @@ class Field : public QObject
     Q_OBJECT
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
     Q_PROPERTY(bool solverRunning READ isSolverRunning NOTIFY solverRunningChanged)
+    Q_PROPERTY(Cells* cells READ cells CONSTANT)
 
 public:
     using Topology = minesweeper::engine::square_board::Topology;
-    using PlayerData = minesweeper::engine::solver::PlayerBoardData<Topology>;
-    using PrivateData = minesweeper::engine::solver::PrivateBoardData<Topology>;
-    using Solver = minesweeper::engine::solver::Solver<Topology>;
 
-    struct Data {
-        Topology topology;
-        PlayerData player_data;
-        PrivateData private_data;
-        Solver solver;
-        Solver::IntermediateData intermediate;
-
-        Solver::index_porapablities porapablities;
-
-        size_t porapablitiesVersion = 0;
-        size_t dataVersion = 1;
-
-        Data(size_t w, size_t h, size_t bombs);
-    };
+    using Data = minesweeper::engine::solver::GameEngine<Topology>;
 
 private:
     std::shared_ptr<Data> _data;
     std::thread _worker_thread;
     bool m_solverRunning = false;
+    Cells* _cells = nullptr;
 
 private:
     void sceduleProbablityUpdate();
@@ -56,6 +45,7 @@ public:
     explicit Field(QObject *parent = 0);
     ~Field();
     QSize size() const;
+    Cells* cells() const { return _cells; }
 
     Q_INVOKABLE void init(const QSize& size, int bombCount);
     Q_INVOKABLE bool hasFlag(const QPoint& index) const;

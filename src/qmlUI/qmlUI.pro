@@ -4,7 +4,8 @@ CONFIG += c++11
 TARGET = minsweeper-qml-ui
 
 SOURCES += main.cpp \
-    Field.cpp
+    Field.cpp \
+    Cells.cpp
 
 RESOURCES += qml.qrc
 
@@ -19,4 +20,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    Field.hpp
+    Field.hpp \
+    Cells.hpp
