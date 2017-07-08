@@ -7,6 +7,11 @@ import QtQuick.Layouts 1.0
 Item {
     id: topPanel
     height: 40
+    property int bombRemains: 99
+
+    Behavior on bombRemains {
+        NumberAnimation {}
+    }
     
     anchors.left: parent.left
     anchors.right: parent.right
@@ -30,14 +35,27 @@ Item {
         //visible: false
     }
     
-    Frame {
+    Item {
         width: 30
         height: 30
         anchors.centerIn: parent
-        id: bombsRemain
+        id: bombRemains
+
+        Glow {
+            anchors.fill: bombsText
+            radius: 15
+            samples: 20
+
+            color: "white"
+            source: bombsText
+        }
+
         Text {
-            text: "99"
+            id: bombsText
+            text: topPanel.bombRemains
             anchors.centerIn: parent
+            font.bold: true
+            font.pixelSize: 20
         }
     }
     

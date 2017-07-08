@@ -85,6 +85,7 @@ void Field::runNextScedule()
                                     _cells->emitFlagChange(prob_pair.first);
                             }
                         }
+                        setBombRemains(_data->bombRemains());
                     }
 
                     _cells->emitPorabablitesChange();
@@ -119,9 +120,18 @@ void Field::click(const minesweeper::engine::square_board::Topology::index_type 
     _cells->emitDataChange();
 }
 
+void Field::setBombRemains(const int& arg)
+{
+    if(arg == m_bombRemains)
+        return;
+
+    m_bombRemains = arg;
+    emit bombRemainsChanged(arg);
+}
+
 Field::Field(QObject *parent)
     : QObject(parent)
-    , _data(new Data(24, 24, 99))
+    , _data(new Data(0, 0, 0))
     , _cells(new Cells(_data.get(), this))
 {
 
@@ -139,13 +149,12 @@ QSize Field::size() const
 }
 
 void Field::init(const QSize &size, int bombCount)
-{
-    _cells->clear();
-    auto newData = std::make_shared<Data>(size.width(), size.height(), bombCount);
+{ auto newData = std::make_shared<Data>(size.width(), size.height(), bombCount);
     _data = newData;
     emit sizeChanged(size);
     _cells->resetEngine(_data.get());
     setSolverRunning(false);
+    setBombRemains(_data->bombRemains());
     runNextScedule();
 }
 

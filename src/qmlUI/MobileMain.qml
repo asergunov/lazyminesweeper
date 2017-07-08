@@ -51,6 +51,7 @@ Item {
 
         anchors.fill: parent
         anchors.topMargin: topPanel.height
+        anchors.bottomMargin: bottomPanel.height
 
         contentWidth: field.width
         contentHeight: field.height
@@ -89,11 +90,16 @@ Item {
 
     MobileTopPanel {
         id: topPanel
+        bombRemains: model.bombRemains
     }
 
     MoblieBottomPanel {
         id: bottomPanel
         onMakeBestTurn: model.makeBestTurn()
-        onRestart: model.init(Qt.size(25,25),99);
+        onRestart: {
+            //model.init(Qt.size(8,8),10);
+            model.init(Qt.size(16,16),40);
+            //model.init(Qt.size(25,25),99);
+        }
     }
 }

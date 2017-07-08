@@ -1,8 +1,4 @@
 import QtQuick 2.4
-import QtQuick.Templates 2.0
-import QtQuick.Controls 2.0
-import QtGraphicalEffects 1.0
-import QtQuick.Layouts 1.0
 
 /*!
   \qmltype MoblileField
@@ -23,11 +19,10 @@ Item {
     }
     property alias cellsModel: repeater.model
     
-    GridLayout {
+    Grid {
         id: grid
         anchors.centerIn: parent
-        columnSpacing: spacing
-        rowSpacing: spacing
+        spacing: field.spacing
         Repeater {
             id: repeater
             delegate: cellDelegate

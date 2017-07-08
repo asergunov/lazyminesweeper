@@ -17,23 +17,13 @@ class Field : public QObject
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
     Q_PROPERTY(bool solverRunning READ isSolverRunning NOTIFY solverRunningChanged)
     Q_PROPERTY(Cells* cells READ cells CONSTANT)
+    Q_PROPERTY(int bombRemains READ bombRemains NOTIFY bombRemainsChanged)
 
 public:
     using Topology = ::Topology;
     using Data = ::GameEngine;
 
-private:
-    std::shared_ptr<Data> _data;
-    std::thread _worker_thread;
-    bool m_solverRunning = false;
-    Cells* _cells = nullptr;
-    bool m_autoFlag = true;
 
-private:
-    void sceduleProbablityUpdate();
-    void runNextScedule();
-    void setSolverRunning(bool);
-    void click(const Field::Topology::index_type& index);
 
 public:
     explicit Field(QObject *parent = 0);
@@ -49,10 +39,31 @@ public:
 
     bool isSolverRunning() const;
 
+    int bombRemains() const
+    {
+        return m_bombRemains;
+    }
+
 signals:
     void sizeChanged(const QSize&);
     void probablitiesChanged();
     void solverRunningChanged(bool solverRunning);
+    void bombRemainsChanged(int bombRemains);
+
+private:
+    void sceduleProbablityUpdate();
+    void runNextScedule();
+    void setSolverRunning(bool);
+    void click(const Field::Topology::index_type& index);
+    void setBombRemains(const int &arg);
+
+private:
+    std::shared_ptr<Data> _data;
+    std::thread _worker_thread;
+    bool m_solverRunning = false;
+    Cells* _cells = nullptr;
+    bool m_autoFlag = true;
+    int m_bombRemains = 0;
 };
 
 #endif // FIELD_HPP

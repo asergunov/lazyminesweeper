@@ -150,6 +150,10 @@ struct GameEngine {
          return _dataVersion > _porapablitiesVersion;
     }
 
+    size_t bombRemains() const {
+        return _player_data.totalBombCount - _player_data.flags.size();
+    }
+
 private:
     topology_type _topology;
     PlayerData _player_data;

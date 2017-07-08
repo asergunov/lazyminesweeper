@@ -37,23 +37,79 @@ Item {
         opacity: 0.8;
     }
 
+
+//    Image {
+//        anchors.fill: parent
+//        source: "green.svg"
+//        opacity: (safe && !opened) ? 0.5 : 0
+//        Behavior on opacity {
+//            NumberAnimation {
+//                easing.type: Easing.InOutQuad
+//            }
+//        }
+//    }
+
     Item {
         id: probablityItem
         anchors.fill: parent
-        visible: !safe && !opened
-
-
+        visible: !opened
+        anchors.margins: 3
 
         Image {
+            opacity: 0.15
             id: mine
             anchors.fill: parent
-            anchors.margins: 3
             source: "mine.svg"
-            scale: probablity
-            Behavior on scale {
+            //            scale: probablity
+            //            Behavior on scale {
+            //                NumberAnimation {
+            //                    easing.type: Easing.OutElastic
+            //                    duration: 500
+            //                }
+            //            }
+        }
+
+        Canvas {
+            id: arc
+            anchors.fill: parent
+            visible: false
+            property real probablity: cell.probablity
+            onProbablityChanged: arc.requestPaint()
+            Behavior on probablity {
                 NumberAnimation {
-                    easing.type: Easing.OutElastic
-                    duration: 500
+                    easing.type: Easing.InOutQuad
+                }
+            }
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.reset();
+
+                var centreX = width / 2;
+                var centreY = height / 2;
+
+                ctx.beginPath();
+                ctx.fillStyle = "black";
+                ctx.moveTo(centreX, centreY);
+                ctx.arc(centreX, centreY, width / 2, Math.PI, Math.PI + Math.PI * 2 * probablity, false);
+                ctx.lineTo(centreX, centreY);
+                ctx.fill();
+            }
+        }
+
+        OpacityMask {
+            anchors.fill: parent
+            source: mine
+            maskSource: arc
+            opacity: 0.5
+        }
+
+        Image {
+            anchors.fill: parent
+            source: "green.svg"
+            opacity: (safe && !opened) ? 0.2 : 0
+            Behavior on opacity {
+                NumberAnimation {
+                    easing.type: Easing.InOutQuad
                 }
             }
         }
@@ -101,13 +157,6 @@ Item {
         visible: false
         opacity: 0
         source: "flag.svg"
-    }
-
-    Image {
-        anchors.fill: parent
-        visible: safe && !opened
-        source: "green.svg"
-        opacity: 0.5
     }
 
     Image {
