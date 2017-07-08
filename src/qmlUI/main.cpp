@@ -1,6 +1,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQmlEngine>
 
 #include "Field.hpp"
 
@@ -12,9 +13,8 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
-    Field field;
+    qmlRegisterType<Field>("minesweeper", 1, 0, "Field");
 
-    engine.rootContext()->setContextProperty("gameField", &field);
     engine.load(QUrl(QLatin1String("qrc:/main.qml")));
 
     return app.exec();

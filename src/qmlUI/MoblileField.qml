@@ -16,6 +16,7 @@ Item {
 
     property alias rows: grid.rows
     property alias columns: grid.columns
+    property real spacing : 2;
 
     property Component cellDelegate : Text {
         text: "none"
@@ -23,8 +24,10 @@ Item {
     property alias cellsModel: repeater.model
     
     GridLayout {
-        anchors.centerIn: parent
         id: grid
+        anchors.centerIn: parent
+        columnSpacing: spacing
+        rowSpacing: spacing
         Repeater {
             id: repeater
             delegate: cellDelegate

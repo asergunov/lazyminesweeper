@@ -32,6 +32,7 @@ struct GameEngine {
     using Solver = minesweeper::engine::solver::Solver<topology_type>;
     using IntermediateData = typename Solver::IntermediateData;
     using index_porapablities = typename Solver::index_porapablities;
+    using probablity_type = typename Solver::probablity_type;
 
     GameEngine(size_t w, size_t h, size_t bombs)
         : _topology(w, h)
@@ -41,6 +42,7 @@ struct GameEngine {
     {
         _player_data.totalBombCount = bombs;
         _private_data.generate(_topology, bombs);
+
     }
 
     bool openField(const index_type& index) {
@@ -94,11 +96,27 @@ struct GameEngine {
         return _topology;
     }
 
+    PlayerData& player() {
+        return _player_data;
+    }
+
     const PlayerData& player() const {
         return _player_data;
     }
 
-    double porabablity(const index_type& index) const {
+
+    const index_porapablities& probablities() const {
+        return _porapablities;
+    }
+
+    probablity_type porabablity(const index_type& index) const {
+        const auto i = _porapablities.find(index);
+        if(i == _porapablities.end())
+            return {-1, 1};
+        return i->second;
+    }
+
+    double porabablityDouble(const index_type& index) const {
         const auto i = _porapablities.find(index);
         return i == _porapablities.end() ? -1.0 : Solver::toDouble(i->second);
     }

@@ -6,12 +6,20 @@ import QtQuick.Layouts 1.0
 
 RowLayout {
     id: bottomPanel
+
+    signal makeBestTurn();
+    signal restart();
+
     anchors.bottom: parent.bottom
     Button {
         id: bestTurnButton
+        text: "Best turn"
+        onClicked: makeBestTurn();
     }
     
     Button {
         id: restartButton
+        text: "Restart"
+        onClicked: restart();
     }
 }

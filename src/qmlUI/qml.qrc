@@ -15,5 +15,7 @@
         <file>red.svg</file>
         <file>glass.svg</file>
         <file>cell.svg</file>
+        <file>flag.svg</file>
+        <file>mine.svg</file>
     </qresource>
 </RCC>

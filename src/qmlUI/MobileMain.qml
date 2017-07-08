@@ -61,18 +61,27 @@ Item {
             rows: model.size.width
             columns: model.size.height
 
+            function click(cell) {
+                model.click(cell);
+            }
+
+            function douleClick(cell) {
+                model.douleClick(cell);
+            }
+
             cellsModel: model.cells
             cellDelegate: MobileCell {
                 id: cell
 
-                Layout.row: row
-                Layout.column: column
+                Layout.row: model.row
+                Layout.column: model.column
 
-                nearBombCount: bombNearCount
+                nearBombCount: model.nearBombCount ? model.nearBombCount : 0
                 probablity: model.probablity
                 flaged: model.flagged
                 opened: model.opened
                 safe: model.safe
+                cell: model.position
             }
 
         }
@@ -84,5 +93,7 @@ Item {
 
     MoblieBottomPanel {
         id: bottomPanel
+        onMakeBestTurn: model.makeBestTurn()
+        onRestart: model.init(Qt.size(25,25),99);
     }
 }

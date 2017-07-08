@@ -52,6 +52,10 @@ struct PlayerBoardData {
         return flags.find(index) != flags.end();
     }
 
+    bool setFlag(const index_type& index) {
+        return flags.insert(index).second;
+    }
+
     index_set_type unknownCells(const topology_type& topology) const {
         index_set_type result;
         for(const auto& cell : topology) {

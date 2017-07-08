@@ -21,4 +21,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     Field.hpp \
-    Cells.hpp
+    Cells.hpp \
+    engineTypes.hpp

@@ -77,8 +77,17 @@ void Field::runNextScedule()
                 }
                 
                 if(_data->merge_solution(version, intermediate, porapablities)) {
-                    emit this->probablitiesChanged();
-    
+                    if(m_autoFlag) {
+                        auto& player = _data->player();
+                        for(const auto& prob_pair: _data->probablities()) {
+                            if(prob_pair.second == 1) {
+                                if(player.setFlag(prob_pair.first))
+                                    _cells->emitFlagChange(prob_pair.first);
+                            }
+                        }
+                    }
+
+                    _cells->emitPorabablitesChange();
                     setSolverRunning(false);
                     runNextScedule();
                 }
@@ -106,14 +115,14 @@ void Field::click(const minesweeper::engine::square_board::Topology::index_type 
     if(!_data->openField(index))
         return;
 
-    emit valuesChanged(toPoint(index));
     sceduleProbablityUpdate();
+    _cells->emitDataChange();
 }
 
 Field::Field(QObject *parent)
     : QObject(parent)
-    , _data(new Data(10, 10, 0))
-    , _cells(new Cells(this))
+    , _data(new Data(24, 24, 99))
+    , _cells(new Cells(_data.get(), this))
 {
 
 }
@@ -131,43 +140,35 @@ QSize Field::size() const
 
 void Field::init(const QSize &size, int bombCount)
 {
-    _data = std::make_shared<Data>(size.width(), size.height(), bombCount);
+    _cells->clear();
+    auto newData = std::make_shared<Data>(size.width(), size.height(), bombCount);
+    _data = newData;
+    emit sizeChanged(size);
+    _cells->resetEngine(_data.get());
     setSolverRunning(false);
     runNextScedule();
-    emit sizeChanged(size);
 }
 
-bool Field::hasFlag(const QPoint &index) const
-{
-    return _data->player().hasFlag(toIndex(index));
-}
-
-qreal Field::minePorabablity(const QPoint &index) const
-{
-    return _data->porabablity(toIndex(index));
-}
-
-int Field::bombsNearCount(const QPoint &index) const
-{
-    const auto& opened = _data->player().openedItems();
-    const auto i = opened.find(toIndex(index));
-    return i==opened.end() ? -1 : i->second;
-}
 
 void Field::click(const QPoint &index)
 {
     click(toIndex(index));
+    _cells->emitDataChange();
 }
 
 void Field::douleClick(const QPoint &_index)
 {
     const auto& index = toIndex(_index);
     _data->openAllNear(index);
+    sceduleProbablityUpdate();
+    _cells->emitDataChange();
 }
 
 void Field::makeBestTurn()
 {
     _data->makeBestTurn();
+    _cells->emitDataChange();
+    sceduleProbablityUpdate();
 }
 
 bool Field::isSolverRunning() const

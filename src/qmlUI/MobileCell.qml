@@ -8,6 +8,9 @@ Item {
     property bool safe : false
     property bool opened : false
     property real probablity: 0.5
+    property point cell: Qt.point(0,0)
+
+    // Rectangle { color: "#ff0000"; anchors.fill: parent; opacity: 0.3; }
 
     property variant textColors: {
         return [
@@ -26,17 +29,43 @@ Item {
     width: 30
     height: 30
     
-    Item {
+    Rectangle {
+        id: background
         anchors.fill: parent
-        visible: !flaged && !safe && !opened
-        Rectangle {
-            id: probablityBackground
+        color: "#f0f0f0"
+        radius: 4
+        opacity: 0.8;
+    }
+
+    Item {
+        id: probablityItem
+        anchors.fill: parent
+        visible: !safe && !opened
+
+
+
+        Image {
+            id: mine
             anchors.fill: parent
-            //color: Qt.darker(Qt.rgba(1,1,1,1), 1.0+probablity)
-            color: Qt.hsla(0, 0, 1-probablity, 1)
-            radius: 4
-            opacity: 0.8;
+            anchors.margins: 3
+            source: "mine.svg"
+            scale: probablity
+            Behavior on scale {
+                NumberAnimation {
+                    easing.type: Easing.OutElastic
+                    duration: 500
+                }
+            }
         }
+
+//        Rectangle {
+//            id: probablityBackground
+//            anchors.fill: parent
+//            //color: Qt.darker(Qt.rgba(1,1,1,1), 1.0+probablity)
+//            color: Qt.hsla(0, 0, 1-probablity, 1)
+//            radius: 4
+//            opacity: 0.8;
+//        }
     }
 
     Item {
@@ -64,15 +93,21 @@ Item {
 
 
     Image {
-        anchors.fill: parent
-        visible: flaged
-        source: "red.svg"
+        id: flag
+        width: cell.width - 6; height: cell.height - 6
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: -cell.height*2
+        //anchors.margins: 3
+        visible: false
+        opacity: 0
+        source: "flag.svg"
     }
 
     Image {
         anchors.fill: parent
-        visible: safe
+        visible: safe && !opened
         source: "green.svg"
+        opacity: 0.5
     }
 
     Image {
@@ -80,4 +115,59 @@ Item {
         visible: !opened
         source: "glass.svg"
     }
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            field.click(cell.cell);
+        }
+
+        onDoubleClicked: {
+            field.douleClick(cell.cell);
+        }
+    }
+
+    states: [
+        State {
+            name: "flagged"
+            when: flagged
+            PropertyChanges {
+                target: flag
+                visible: true
+                anchors.verticalCenterOffset: 0
+                opacity: 1
+            }
+            PropertyChanges {
+                target: mine
+                visible: false
+                opacity: 0
+            }
+        }
+    ]
+
+    transitions: [
+        Transition {
+            to: "flagged"
+            SequentialAnimation {
+                PropertyAction { targets: [flag]; property: "visible" }
+                ParallelAnimation {
+                    NumberAnimation { target: mine; property: "opacity"; easing.type: Easing.OutQuad; duration: 100 }
+
+                    NumberAnimation {
+                        target: flag;
+                        property: "opacity";
+                        easing.type: Easing.InQuad
+                    }
+
+                    NumberAnimation {
+                        target: flag;
+                        property: "anchors.verticalCenterOffset";
+                        easing.type: Easing.OutBounce
+                        duration: 700
+                    }
+                }
+                PropertyAction { targets: [mine]; property: "visible" }
+            }
+        }
+    ]
 }
