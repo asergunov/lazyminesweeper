@@ -7,7 +7,7 @@ Item {
     property bool flaged : false
     property bool safe : false
     property bool opened : false
-    property real probablity: 0.5
+    property real probablity: -1
     property point cell: Qt.point(0,0)
 
     // Rectangle { color: "#ff0000"; anchors.fill: parent; opacity: 0.3; }
@@ -40,7 +40,7 @@ Item {
 
 //    Image {
 //        anchors.fill: parent
-//        source: "green.svg"
+//        source: "green.png"
 //        opacity: (safe && !opened) ? 0.5 : 0
 //        Behavior on opacity {
 //            NumberAnimation {
@@ -52,21 +52,14 @@ Item {
     Item {
         id: probablityItem
         anchors.fill: parent
-        visible: !opened
+        visible: !opened && probablity >= 0
         anchors.margins: 3
 
         Image {
             opacity: 0.15
             id: mine
             anchors.fill: parent
-            source: "mine.svg"
-            //            scale: probablity
-            //            Behavior on scale {
-            //                NumberAnimation {
-            //                    easing.type: Easing.OutElastic
-            //                    duration: 500
-            //                }
-            //            }
+            source: "mine.png"
         }
 
         Canvas {
@@ -105,7 +98,7 @@ Item {
 
         Image {
             anchors.fill: parent
-            source: "green.svg"
+            source: "green.png"
             opacity: (safe && !opened) ? 0.2 : 0
             Behavior on opacity {
                 NumberAnimation {
@@ -156,13 +149,13 @@ Item {
         //anchors.margins: 3
         visible: false
         opacity: 0
-        source: "flag.svg"
+        source: "flag.png"
     }
 
     Image {
         anchors.fill: parent
         visible: !opened
-        source: "glass.svg"
+        source: "glass.png"
     }
 
     MouseArea {
@@ -216,7 +209,7 @@ Item {
                     }
                 }
                 PropertyAction { targets: [mine]; property: "visible" }
-            }
+            }background
         }
     ]
 }

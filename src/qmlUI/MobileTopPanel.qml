@@ -21,7 +21,7 @@ Item {
         id: bgDarkner
         anchors.fill: parent
         source: ShaderEffectSource {
-            sourceItem: fieldContainer.background
+            sourceItem: fieldContainer
             sourceRect: mapToItem(fieldContainer.background, 0, 0, topPanel.width, topPanel.height)
         }
         color: "#10000000"

@@ -1,4 +1,4 @@
-QT += qml quick
+QT += qml quick svg
 
 CONFIG += c++11
 TARGET = minsweeper-qml-ui
@@ -23,3 +23,7 @@ HEADERS += \
     Field.hpp \
     Cells.hpp \
     engineTypes.hpp
+
+android {
+INCLUDEPATH+= /home/asergunov/boost_1_64_0
+}

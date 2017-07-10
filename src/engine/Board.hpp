@@ -118,7 +118,9 @@ struct GameEngine {
 
     double porabablityDouble(const index_type& index) const {
         const auto i = _porapablities.find(index);
-        return i == _porapablities.end() ? -1.0 : Solver::toDouble(i->second);
+        return i == _porapablities.end()
+                ? -1.0
+                : Solver::toDouble(i->second);
     }
 
     void openAllNear(const index_type& index) {

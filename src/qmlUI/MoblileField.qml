@@ -10,8 +10,10 @@ Item {
     width: Math.max(grid.width, fieldContainer.width)
     height: Math.max(grid.height, fieldContainer.height)
 
-    property alias rows: grid.rows
-    property alias columns: grid.columns
+    property int rows: grid.rows
+    property int columns: grid.columns
+    property int rowHeight: 30
+    property int columnWidth: 30
     property real spacing : 2;
 
     property Component cellDelegate : Text {
@@ -19,10 +21,12 @@ Item {
     }
     property alias cellsModel: repeater.model
     
-    Grid {
+    Item {
         id: grid
         anchors.centerIn: parent
-        spacing: field.spacing
+        //spacing: field.spacing
+        width: columns * columnWidth + spacing * (columns-1);
+        height: rows * rowHeight + spacing * (rows-1);
         Repeater {
             id: repeater
             delegate: cellDelegate

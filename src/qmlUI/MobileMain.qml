@@ -1,8 +1,5 @@
 import QtQuick 2.4
-import QtQuick.Templates 2.0
-import QtQuick.Controls 2.0
 import QtGraphicalEffects 1.0
-import QtQuick.Layouts 1.0
 import QtQml.Models 2.2
 
 Item {
@@ -61,6 +58,7 @@ Item {
 
             rows: model.size.width
             columns: model.size.height
+            rowHeight: 45; columnWidth: 45;
 
             function click(cell) {
                 model.click(cell);
@@ -73,16 +71,14 @@ Item {
             cellsModel: model.cells
             cellDelegate: MobileCell {
                 id: cell
-
-                Layout.row: model.row
-                Layout.column: model.column
-
+                width: field.columnWidth; height: field.rowHeight
                 nearBombCount: model.nearBombCount ? model.nearBombCount : 0
                 probablity: model.probablity
                 flaged: model.flagged
                 opened: model.opened
                 safe: model.safe
                 cell: model.position
+                x: cell.cell.x * (width+field.spacing); y: cell.cell.y * (height+field.spacing)
             }
 
         }
