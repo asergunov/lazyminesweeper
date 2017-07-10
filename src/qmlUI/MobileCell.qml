@@ -209,7 +209,7 @@ Item {
                     }
                 }
                 PropertyAction { targets: [mine]; property: "visible" }
-            }background
+            }
         }
     ]
 }
