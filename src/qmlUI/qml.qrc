@@ -19,5 +19,8 @@
         <file>green.png</file>
         <file>flag.png</file>
         <file>glass.png</file>
+        <file>MobileCellCache.qml</file>
+        <file>ArcCanvas.qml</file>
+        <file>qmldir</file>
     </qresource>
 </RCC>

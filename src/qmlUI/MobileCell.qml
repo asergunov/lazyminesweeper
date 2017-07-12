@@ -1,5 +1,6 @@
 import QtQuick 2.4
 import QtGraphicalEffects 1.0
+import "."
 
 Item {
     id:cell
@@ -54,6 +55,13 @@ Item {
         anchors.fill: parent
         visible: !opened && probablity >= 0
         anchors.margins: 3
+        property real probablity: cell.probablity
+
+        Behavior on probablity {
+            NumberAnimation {
+                easing.type: Easing.InOutQuad
+            }
+        }
 
         Image {
             opacity: 0.15
@@ -62,37 +70,10 @@ Item {
             source: "mine.png"
         }
 
-        Canvas {
-            id: arc
-            anchors.fill: parent
-            visible: false
-            property real probablity: cell.probablity
-            onProbablityChanged: arc.requestPaint()
-            Behavior on probablity {
-                NumberAnimation {
-                    easing.type: Easing.InOutQuad
-                }
-            }
-            onPaint: {
-                var ctx = getContext("2d");
-                ctx.reset();
-
-                var centreX = width / 2;
-                var centreY = height / 2;
-
-                ctx.beginPath();
-                ctx.fillStyle = "black";
-                ctx.moveTo(centreX, centreY);
-                ctx.arc(centreX, centreY, width / 2, Math.PI, Math.PI + Math.PI * 2 * probablity, false);
-                ctx.lineTo(centreX, centreY);
-                ctx.fill();
-            }
-        }
-
         OpacityMask {
             anchors.fill: parent
             source: mine
-            maskSource: arc
+            maskSource: MobileCellCache.arcSource(probablityItem.probablity)
             opacity: 0.5
         }
 

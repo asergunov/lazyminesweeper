@@ -27,3 +27,6 @@ HEADERS += \
 android {
 INCLUDEPATH+= /home/asergunov/boost_1_64_0
 }
+
+DISTFILES += \
+    qmldir
