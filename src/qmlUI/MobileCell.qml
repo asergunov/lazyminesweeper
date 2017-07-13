@@ -10,25 +10,9 @@ Item {
     property bool opened : false
     property real probablity: -1
     property point cell: Qt.point(0,0)
+    property MobileCellCache cache
 
-    // Rectangle { color: "#ff0000"; anchors.fill: parent; opacity: 0.3; }
-
-    property variant textColors: {
-        return [
-        "#00000000",
-        "#0100fe", // 1
-        "#017f01", // 2
-        "#fe0000", // 3
-        "#010080", // 4
-        "#810102", // 5
-        "#008081", // 6
-        "#000000",
-        "#808080"
-        ];
-    }
-
-    width: 30
-    height: 30
+    width: cellCache.cellSize; height: cellCache.cellSize
     
     Rectangle {
         id: background
@@ -37,18 +21,6 @@ Item {
         radius: 4
         opacity: 0.8;
     }
-
-
-//    Image {
-//        anchors.fill: parent
-//        source: "green.png"
-//        opacity: (safe && !opened) ? 0.5 : 0
-//        Behavior on opacity {
-//            NumberAnimation {
-//                easing.type: Easing.InOutQuad
-//            }
-//        }
-//    }
 
     Item {
         id: probablityItem
@@ -63,18 +35,13 @@ Item {
             }
         }
 
-        Image {
-            opacity: 0.15
+        TrivialShader {
             id: mine
-            anchors.fill: parent
-            source: "mine.png"
-        }
-
-        OpacityMask {
-            anchors.fill: parent
-            source: mine
-            maskSource: MobileCellCache.arcSource(probablityItem.probablity)
-            opacity: 0.5
+            opacity: 1
+            visible: true
+            source: cache.probabilitySource(probablityItem.probablity);
+            width: source.sourceItem.width; height: source.sourceItem.height
+            anchors.centerIn: parent
         }
 
         Image {
@@ -87,56 +54,31 @@ Item {
                 }
             }
         }
-
-//        Rectangle {
-//            id: probablityBackground
-//            anchors.fill: parent
-//            //color: Qt.darker(Qt.rgba(1,1,1,1), 1.0+probablity)
-//            color: Qt.hsla(0, 0, 1-probablity, 1)
-//            radius: 4
-//            opacity: 0.8;
-//        }
     }
 
-    Item {
+    TrivialShader {
+        id: trivialShader
         anchors.fill: parent
         visible: opened
-        Glow {
-              anchors.fill: bombsText
-              radius: 15
-              samples: 20
-
-              color: "white"
-              source: bombsText
-          }
-
-        Text {
-            id: bombsText
-            anchors.centerIn: parent
-            text: nearBombCount
-            font.bold: true
-            font.pixelSize: 20
-            color: textColors[nearBombCount]
-        }
+        source: cache.bombTextSources[cell.nearBombCount]
     }
 
 
+
+    Image {
+        anchors.fill: parent
+        visible: !opened
+        source: "glass.png"
+    }
 
     Image {
         id: flag
         width: cell.width - 6; height: cell.height - 6
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -cell.height*2
-        //anchors.margins: 3
         visible: false
         opacity: 0
         source: "flag.png"
-    }
-
-    Image {
-        anchors.fill: parent
-        visible: !opened
-        source: "glass.png"
     }
 
     MouseArea {
@@ -174,7 +116,7 @@ Item {
             SequentialAnimation {
                 PropertyAction { targets: [flag]; property: "visible" }
                 ParallelAnimation {
-                    NumberAnimation { target: mine; property: "opacity"; easing.type: Easing.OutQuad; duration: 100 }
+                    NumberAnimation { target: mine; property: "opacity"; easing.type: Easing.OutQuad; duration: 1000 }
 
                     NumberAnimation {
                         target: flag;

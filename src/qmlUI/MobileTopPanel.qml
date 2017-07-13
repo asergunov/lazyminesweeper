@@ -1,13 +1,14 @@
 import QtQuick 2.4
-import QtQuick.Templates 2.0
 import QtQuick.Controls 2.0
 import QtGraphicalEffects 1.0
-import QtQuick.Layouts 1.0
 
 Item {
     id: topPanel
     height: 40
     property int bombRemains: 99
+    signal makeBestTurn();
+    signal restart();
+
 
     Behavior on bombRemains {
         NumberAnimation {}
@@ -35,27 +36,22 @@ Item {
         //visible: false
     }
     
-    Item {
-        width: 30
-        height: 30
-        anchors.centerIn: parent
+    GlowText {
         id: bombRemains
+        width: 30; height: 30
+        anchors.centerIn: parent
+        text: topPanel.bombRemains
+    }
 
-        Glow {
-            anchors.fill: bombsText
-            radius: 15
-            samples: 20
+    Row {
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.margins: 4
 
-            color: "white"
-            source: bombsText
-        }
-
-        Text {
-            id: bombsText
-            text: topPanel.bombRemains
-            anchors.centerIn: parent
-            font.bold: true
-            font.pixelSize: 20
+        Button {
+            id: restartButton
+            text: "Restart"
+            onClicked: restart();
         }
     }
     

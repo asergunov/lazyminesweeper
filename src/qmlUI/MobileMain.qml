@@ -48,7 +48,6 @@ Item {
 
         anchors.fill: parent
         anchors.topMargin: topPanel.height
-        anchors.bottomMargin: bottomPanel.height
 
         contentWidth: field.width
         contentHeight: field.height
@@ -58,7 +57,7 @@ Item {
 
             rows: model.size.width
             columns: model.size.height
-            rowHeight: 45; columnWidth: 45;
+            rowHeight: cellCache.cellSize; columnWidth: cellCache.cellSize;
 
             function click(cell) {
                 model.click(cell);
@@ -79,18 +78,20 @@ Item {
                 safe: model.safe
                 cell: model.position
                 x: cell.cell.x * (width+field.spacing); y: cell.cell.y * (height+field.spacing)
+                cache: cellCache
             }
 
         }
     }
 
+    MobileCellCache {
+        id:  cellCache
+        cellSize: 45*fieldContainer.scale
+    }
+
     MobileTopPanel {
         id: topPanel
         bombRemains: model.bombRemains
-    }
-
-    MoblieBottomPanel {
-        id: bottomPanel
         onMakeBestTurn: model.makeBestTurn()
         onRestart: {
             //model.init(Qt.size(8,8),10);

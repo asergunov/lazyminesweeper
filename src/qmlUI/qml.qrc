@@ -21,6 +21,7 @@
         <file>glass.png</file>
         <file>MobileCellCache.qml</file>
         <file>ArcCanvas.qml</file>
-        <file>qmldir</file>
+        <file>GlowText.qml</file>
+        <file>TrivialShader.qml</file>
     </qresource>
 </RCC>

@@ -9,9 +9,23 @@ ApplicationWindow {
     height: 480
     title: qsTr("Lazy minesweeper")
 
-    MobileMain {
-        model: Field {
+//    MobileMain {
+//        model: Field {
+//        }
+//        anchors.fill: parent
+//    }
+
+//  QTBUG-61434 workaround
+    Component {
+        id: main
+        MobileMain {
+            model: Field {
+            }
+            anchors.fill: parent
         }
-        anchors.fill: parent
+    }
+
+    Component.onCompleted: {
+        main.createObject(contentItem);
     }
 }
