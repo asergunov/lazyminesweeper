@@ -1,5 +1,4 @@
 import QtQuick 2.4
-import QtGraphicalEffects 1.0
 import QtQml.Models 2.2
 
 Item {
@@ -8,6 +7,20 @@ Item {
     height: 800
     layer.enabled: true
     property QtObject model: DummyModel {}
+
+    function restart() {
+        newGameDialog.shown = true;
+        statsScreen.shown = false
+    }
+
+    Connections {
+        target: model
+        onGameOver: {
+            // var win - true if win
+            statsScreen.win = win;
+            statsScreen.shown = true;
+        }
+    }
 
     ParalaxFlickable {
         id: fieldContainer
@@ -65,12 +78,27 @@ Item {
         cache: cellCache
         bombRemains: model.bombRemains
         onMakeBestTurn: model.makeBestTurn()
-        onRestart: {
-            //model.init(Qt.size(8,8),10);
-            model.init(Qt.size(16,16),40);
-            //model.init(Qt.size(25,25),99);
-        }
+        onRestart: main.restart()
         solverActive: true
         solverInprogress: model.solverRunning
+    }
+
+    StatsScreen {
+        id: statsScreen
+        source: main
+        visible: false
+        parent: main.parent
+        onRestart: main.restart()
+    }
+
+    NewGameDialog {
+        id: newGameDialog
+        source: main
+        visible: false
+        parent: main.parent
+        onRestart: {
+            model.init(size, bombCount);
+            shown = false;
+        }
     }
 }

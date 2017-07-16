@@ -120,6 +120,11 @@ void Field::click(const minesweeper::engine::square_board::Topology::index_type 
     if(!_data->openField(index))
         return;
 
+    if(_data->player().isGameOver()) {
+        emit gameOver(false);
+        return;
+    }
+
     sceduleProbablityUpdate();
     _cells->emitDataChange();
 }
@@ -131,6 +136,8 @@ void Field::setBombRemains(const int& arg)
 
     m_bombRemains = arg;
     emit bombRemainsChanged(arg);
+    if(arg == 0)
+        emit gameOver(true);
 }
 
 

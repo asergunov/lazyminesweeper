@@ -53,8 +53,8 @@ signals:
     void probablitiesChanged();
     void solverRunningChanged(bool solverRunning);
     void bombRemainsChanged(int bombRemains);
-
     void bombCountChanged(int bombCount);
+    void gameOver(bool win);
 
 private:
     void sceduleProbablityUpdate();

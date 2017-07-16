@@ -25,5 +25,7 @@
         <file>TrivialShader.qml</file>
         <file>DummyModel.qml</file>
         <file>ProbablityItem.qml</file>
+        <file>StatsScreen.qml</file>
+        <file>NewGameDialog.qml</file>
     </qresource>
 </RCC>

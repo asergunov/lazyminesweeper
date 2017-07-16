@@ -11,7 +11,6 @@ Item {
 
     TrivialShader {
         id: mine
-        visible: !safe
         property real probablity: 0.0
         source: cache.probabilitySource(mine.probablity);
         width: source.sourceItem.width; height: source.sourceItem.height
@@ -21,14 +20,10 @@ Item {
     
     Image {
         id: green
-        anchors.fill: parent
+        anchors.fill: mine
         source: "green.png"
         opacity: 0
-        Behavior on opacity {
-            NumberAnimation {
-                easing.type: Easing.InOutQuad
-            }
-        }
+        visible: false
     }
 
     states: [
@@ -37,13 +32,12 @@ Item {
             when: probablityItem.safe
             PropertyChanges {
                 target: mine
-                visible: false
-                opacity: 0
+                probablity: 0
             }
             PropertyChanges {
                 target: green
                 visible: true
-                opacity: 0.2
+                opacity: 0.3
             }
         }
     ]
@@ -58,9 +52,15 @@ Item {
                 }
 
                 NumberAnimation {
-                    targets: [green, mine]
+                    targets: [mine]
+                    properties: "probablity"
+                    easing.type: Easing.InOutQuad
+                }
+
+                NumberAnimation {
+                    targets: [green]
                     properties: "opacity"
-                    duration: 200
+                    easing.type: Easing.InOutQuad
                 }
 
                 PropertyAction {

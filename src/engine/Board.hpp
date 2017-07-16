@@ -55,6 +55,9 @@ struct GameEngine {
     }
 
     bool openField(const index_type& index) {
+        if(_player_data.hasFlag(index))
+            return false;
+
         if(_private_data.openField(_player_data, index, _topology)) {
             ++_dataVersion;
             return true;
