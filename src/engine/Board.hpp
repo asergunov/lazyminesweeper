@@ -27,6 +27,7 @@ template<typename T>
 struct GameEngine {
     typedef T topology_type;
     using index_type = typename topology_type::index_type;
+    using index_set_type = typename topology_type::index_set_type;
     using PlayerData = PlayerBoardData<topology_type>;
     using PrivateData = minesweeper::engine::solver::PrivateBoardData<topology_type>;
     using Solver = minesweeper::engine::solver::Solver<topology_type>;
@@ -42,7 +43,15 @@ struct GameEngine {
     {
         _player_data.totalBombCount = bombs;
         _private_data.generate(_topology, bombs);
+    }
 
+    GameEngine(size_t w, size_t h, const index_set_type& bombs)
+        : _topology(w, h)
+        , _player_data()
+        , _private_data(bombs)
+        , _solver(_topology)
+    {
+        _player_data.totalBombCount = bombs.size();
     }
 
     bool openField(const index_type& index) {
@@ -154,6 +163,10 @@ struct GameEngine {
 
     size_t bombRemains() const {
         return _player_data.totalBombCount - _player_data.flags.size();
+    }
+
+    const PrivateBoardData<T>& privateData() const {
+        return _private_data;
     }
 
 private:

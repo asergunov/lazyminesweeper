@@ -18,6 +18,7 @@ class Field : public QObject
     Q_PROPERTY(bool solverRunning READ isSolverRunning NOTIFY solverRunningChanged)
     Q_PROPERTY(Cells* cells READ cells CONSTANT)
     Q_PROPERTY(int bombRemains READ bombRemains NOTIFY bombRemainsChanged)
+    Q_PROPERTY(int bombCount READ bombCount NOTIFY bombCountChanged)
 
 public:
     using Topology = ::Topology;
@@ -29,7 +30,8 @@ public:
     explicit Field(QObject *parent = 0);
     ~Field();
     QSize size() const;
-    Cells* cells() const { return _cells; }
+    Cells* cells() { return _cells; }
+    const Cells* cells() const { return _cells; }
 
     Q_INVOKABLE void init(const QSize& size, int bombCount);
     Q_INVOKABLE void click(const QPoint& index);
@@ -44,11 +46,15 @@ public:
         return m_bombRemains;
     }
 
+    int bombCount() const;
+
 signals:
     void sizeChanged(const QSize&);
     void probablitiesChanged();
     void solverRunningChanged(bool solverRunning);
     void bombRemainsChanged(int bombRemains);
+
+    void bombCountChanged(int bombCount);
 
 private:
     void sceduleProbablityUpdate();
@@ -56,6 +62,7 @@ private:
     void setSolverRunning(bool);
     void click(const Field::Topology::index_type& index);
     void setBombRemains(const int &arg);
+    void setData(std::shared_ptr<Data> data);
 
 private:
     std::shared_ptr<Data> _data;

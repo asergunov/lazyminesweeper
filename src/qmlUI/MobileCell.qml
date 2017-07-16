@@ -8,7 +8,7 @@ Item {
     property bool flaged : false
     property bool safe : false
     property bool opened : false
-    property real probablity: -1
+    property real probablity: 0
     property point cell: Qt.point(0,0)
     property MobileCellCache cache
 
@@ -22,36 +22,21 @@ Item {
         opacity: 0.8;
     }
 
-    Item {
-        id: probablityItem
+    ProbablityItem {
+        id: mine
+
+        opacity: 1
+
+        probablity: cell.probablity
+        cache: cell.cache
         anchors.fill: parent
-        visible: !opened && probablity >= 0
         anchors.margins: 3
-        property real probablity: cell.probablity
+        visible: !cell.opened && probablity >= 0
+        opened: cell.opened
+        safe: cell.safe
 
-        Behavior on probablity {
-            NumberAnimation {
+        Behavior on probablity {NumberAnimation {
                 easing.type: Easing.InOutQuad
-            }
-        }
-
-        TrivialShader {
-            id: mine
-            opacity: 1
-            visible: true
-            source: cache.probabilitySource(probablityItem.probablity);
-            width: source.sourceItem.width; height: source.sourceItem.height
-            anchors.centerIn: parent
-        }
-
-        Image {
-            anchors.fill: parent
-            source: "green.png"
-            opacity: (safe && !opened) ? 0.2 : 0
-            Behavior on opacity {
-                NumberAnimation {
-                    easing.type: Easing.InOutQuad
-                }
             }
         }
     }

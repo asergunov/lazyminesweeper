@@ -17,6 +17,12 @@ struct PrivateBoardData {
 
     index_set_type bombs;
 
+    PrivateBoardData() {}
+    PrivateBoardData(const index_set_type& bombs)
+        : bombs(bombs) {
+
+    }
+
     bool openField(PlayerBoardData<T>& playerData, const index_type& index, const topology_type& topology) const {
         if(playerData.isOpened(index))
             return false;

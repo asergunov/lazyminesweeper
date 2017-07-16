@@ -23,5 +23,7 @@
         <file>ArcCanvas.qml</file>
         <file>GlowText.qml</file>
         <file>TrivialShader.qml</file>
+        <file>DummyModel.qml</file>
+        <file>ProbablityItem.qml</file>
     </qresource>
 </RCC>

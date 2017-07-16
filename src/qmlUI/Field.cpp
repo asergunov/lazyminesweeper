@@ -1,8 +1,12 @@
 #include "Field.hpp"
 
+#include "Cells.hpp"
+
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QApplication>
+#include <QSettings>
 
 namespace {
     Field::Topology::index_type toIndex(const QPoint& p) {
@@ -129,12 +133,88 @@ void Field::setBombRemains(const int& arg)
     emit bombRemainsChanged(arg);
 }
 
+
 Field::Field(QObject *parent)
     : QObject(parent)
     , _data(new Data(0, 0, 0))
     , _cells(new Cells(_data.get(), this))
 {
+    static const auto fieldSuspendStateGroup = "fieldSuspendState";
+    auto writeSuspendState = [](const Field* field, QSettings& s) {
+        Q_ASSERT(s.isWritable());
+        s.beginGroup(fieldSuspendStateGroup);
+        s.setValue("size", field->size());
 
+        auto writeIndexSet = [&](const QString& name, const Data::index_set_type& indexSet) {
+            int i = 0;
+            s.beginWriteArray(name, static_cast<int>(indexSet.size()));
+            for(const auto& index : indexSet) {
+                s.setArrayIndex(i++);
+                s.setValue("position", toPoint(index));
+            }
+            s.endArray();
+        };
+
+        auto keySet = [](const Data::PlayerData::opened_items_type& opened_map) {
+            Data::index_set_type result;
+            for(const auto& pair : opened_map) {
+                result.insert(pair.first);
+            }
+            return result;
+        };
+
+        writeIndexSet("bombs", field->_data->privateData().bombs);
+        writeIndexSet("flags", field->_data->player().flags);
+        writeIndexSet("opened", keySet(field->_data->player().openedItems()));
+
+        s.endGroup(); // fieldSuspendStateGroup
+    };
+
+    auto readSuspendState = [](Field* field, QSettings& s) {
+
+        if(!s.childGroups().contains(fieldSuspendStateGroup))
+            return;
+
+        s.beginGroup(fieldSuspendStateGroup);
+        const auto size = s.value("size").toSize();
+
+        auto readIndexSet = [&](const QString& name) {
+            Data::index_set_type indexSet;
+            const int count = s.beginReadArray(name);
+            for(int i = 0; i<count; ++i) {
+                s.setArrayIndex(i);
+                indexSet.insert(toIndex( s.value("position").toPoint() ));
+            }
+            s.endArray();
+            return indexSet;
+        };
+
+        const auto& bombs = readIndexSet("bombs");
+        const auto& flags = readIndexSet("flags");
+        const auto& opened = readIndexSet("opened");
+
+        s.endGroup(); // fieldSuspendState
+        s.remove("fieldSuspendState");
+
+        auto data = std::make_shared<Data>(size.width(), size.height(), bombs);
+        for(const auto& index: opened)
+            data->openField(index);
+        for(const auto& index: flags)
+            data->player().setFlag(index);
+
+        field->setData(data);
+
+    };
+
+    connect(qApp, &QApplication::applicationStateChanged, this, [this, writeSuspendState](Qt::ApplicationState state){
+        if(state == Qt::ApplicationState::ApplicationSuspended) {
+            QSettings s;
+            writeSuspendState(this, s);
+        }
+    });
+
+    QSettings s;
+    readSuspendState(this, s);
 }
 
 Field::~Field()
@@ -149,15 +229,21 @@ QSize Field::size() const
 }
 
 void Field::init(const QSize &size, int bombCount)
-{ auto newData = std::make_shared<Data>(size.width(), size.height(), bombCount);
-    _data = newData;
-    emit sizeChanged(size);
+{
+    setData(std::make_shared<Data>(size.width(), size.height(), bombCount));
+}
+
+
+void Field::setData(std::shared_ptr<Field::Data> data)
+{
+    _data = std::move(data);
+    emit sizeChanged(this->size());
+    emit bombCountChanged(this->bombCount());
     _cells->resetEngine(_data.get());
     setSolverRunning(false);
     setBombRemains(_data->bombRemains());
     runNextScedule();
 }
-
 
 void Field::click(const QPoint &index)
 {
@@ -183,4 +269,9 @@ void Field::makeBestTurn()
 bool Field::isSolverRunning() const
 {
     return m_solverRunning;
+}
+
+int Field::bombCount() const
+{
+    return _data->player().totalBombCount;
 }

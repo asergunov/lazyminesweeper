@@ -6,6 +6,10 @@ Item {
     id: topPanel
     height: 40
     property int bombRemains: 99
+    property MobileCellCache cache
+    property alias solverInprogress: solverButton.inProgress
+    property alias solverActive: solverButton.active
+
     signal makeBestTurn();
     signal restart();
 
@@ -43,16 +47,58 @@ Item {
         text: topPanel.bombRemains
     }
 
-    Row {
+    Button {
+        id: restartButton
+
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         anchors.margins: 4
 
-        Button {
-            id: restartButton
-            text: "Restart"
-            onClicked: restart();
+        text: "Restart"
+        onClicked: restart();
+    }
+
+    Button {
+        id: solverButton
+
+        property bool inProgress: false
+        property bool active: true
+
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
+        width: parent.height; height: parent.height
+
+        indicator: Item {
+            anchors.fill: parent
+
+            Rectangle {
+                color: "#f0f0f0"
+                anchors.fill: parent
+                opacity: 0.8;
+            }
+            ProbablityItem {
+                id: trivialShader
+                anchors.fill: parent
+                anchors.margins: 3
+                safe: solverButton.active && !solverButton.inProgress
+                cache: topPanel.cache
+                SequentialAnimation {
+                    loops: Animation.Infinite
+                    running: solverButton.inProgress
+                    NumberAnimation {
+                        target: trivialShader
+                        property: "probablity"
+                        from: 0.0; to: 1.0;
+                        duration: 1000
+                    }
+                    NumberAnimation {
+                        target: trivialShader
+                        property: "probablity"
+                        to: 0.0;
+                        duration: 1000
+                    }
+                }
+            }
         }
     }
-    
 }
