@@ -25,6 +25,7 @@ public:
         PositionRole,
         RowRole,
         ColumnRole,
+        ExplodedRole,   ///< is bomb exploded : bool
         UserRole
     };
 

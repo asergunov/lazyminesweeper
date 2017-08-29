@@ -8,6 +8,7 @@ Item {
     property bool flaged : false
     property bool safe : false
     property bool opened : false
+    property bool exploded: false
     property real probablity: 0
     property point cell: Qt.point(0,0)
     property MobileCellCache cache
@@ -92,7 +93,22 @@ Item {
                 visible: false
                 opacity: 0
             }
+        }, State {
+            name: "exploded"
+            when: exploded
+
+            PropertyChanges {
+                target: mine
+                visible: true
+                opacity: 1
+                probablity: 1
+            }
+            PropertyChanges {
+                target: background
+                color: "#FF0000"
+            }
         }
+
     ]
 
     transitions: [

@@ -32,6 +32,7 @@ struct PrivateBoardData {
 
         if(isBombAt(index)) {
             playerData.setLoose(index);
+            playerData.exploded = bombs;
         } else {
             const auto count = bombsCountIn(topology.neighbours(index));
             playerData.setOpened(index, count);

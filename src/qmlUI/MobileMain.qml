@@ -9,6 +9,11 @@ Item {
     property QtObject model: DummyModel {}
 
     function restart() {
+        model.init(model.size, model.bombCount);
+        statsScreen.shown = false
+    }
+
+    function startNewGame() {
         newGameDialog.shown = true;
         statsScreen.shown = false
     }
@@ -61,6 +66,7 @@ Item {
                 opened: model.opened
                 safe: model.safe
                 cell: model.position
+                exploded: model.exploded
                 x: cell.cell.x * (width+field.spacing); y: cell.cell.y * (height+field.spacing)
                 cache: cellCache
             }
@@ -78,7 +84,7 @@ Item {
         cache: cellCache
         bombRemains: model.bombRemains
         onMakeBestTurn: model.makeBestTurn()
-        onRestart: main.restart()
+        onRestart: main.startNewGame()
         solverActive: true
         solverInprogress: model.solverRunning
     }
@@ -89,6 +95,7 @@ Item {
         visible: false
         parent: main.parent
         onRestart: main.restart()
+        onStartNewGame: main.startNewGame();
     }
 
     NewGameDialog {

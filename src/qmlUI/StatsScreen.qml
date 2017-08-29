@@ -9,6 +9,7 @@ Item {
     property bool win: false
     property bool shown: false
     signal restart();
+    signal startNewGame();
 
     visible: false
     anchors.fill: source
@@ -37,13 +38,13 @@ Item {
 
         Rectangle {
             color: "#80000000"
-            anchors.fill: dialog
+            anchors.fill: parent
         }
 
         ColumnLayout {
             id: content
             anchors.centerIn: parent
-            spacing: text.height
+            spacing: 20
 
             Text {
                 id: text
@@ -51,13 +52,22 @@ Item {
                       ? qsTr("We won!")
                       : qsTr("Game over")
                 color: "white"
-                font.pixelSize: statsScreen.width/15
+                font.pixelSize: 40
+                Layout.fillHeight: true
+            }
+
+            Button {
+                text: qsTr("Restart");
+                onClicked: statsScreen.restart()
+                Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
+                Layout.fillWidth: true
             }
 
             Button {
                 text: qsTr("Start new game");
-                anchors.horizontalCenter: text.horizontalCenter
-                onClicked: statsScreen.restart()
+                onClicked: statsScreen.startNewGame()
+                Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
+                Layout.fillWidth: true
             }
         }
     }

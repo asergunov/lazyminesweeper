@@ -18,6 +18,7 @@ struct PlayerBoardData {
 
     opened_items_type _openedItems;
     index_set_type flags;
+    index_set_type exploded;    ///< the set of bombs exploded
     size_t totalBombCount;
     bool loose = false;
     index_type _loose_index;
@@ -42,6 +43,28 @@ struct PlayerBoardData {
 
     const opened_items_type& openedItems() const {
         return _openedItems;
+    }
+
+    /**
+     * @brief check if bomb exploded in cell
+     * @param index of cell
+     * @return true if exploded
+     */
+    bool isExploded(const index_type& index) const {
+        return exploded.find(index) != exploded.end();
+    }
+
+    /**
+     * @brief mark cell as exploded
+     * @param index
+     * @param exploded
+     */
+    void setExploded(const index_type& index, bool exploded = true) {
+        if(exploded) {
+            this->exploded.insert(index);
+        } else {
+            this->exploded.erase(index);
+        }
     }
 
     bool isOpened(const index_type& index) const {

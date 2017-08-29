@@ -89,6 +89,8 @@ QVariant Cells::data(const QModelIndex &index, int role) const
     }
     case Cells::SafeRole:
         return m_engine->porabablity(cell) == 0;
+    case Cells::ExplodedRole:
+        return m_engine->player().isExploded(cell);
     }
 
     return {};
@@ -104,6 +106,7 @@ QHash<int, QByteArray> Cells::roleNames() const
         {SafeRole, "safe"},
         {PositionRole, "position"},
         {RowRole, "row"},
-        {ColumnRole, "column"}
+        {ColumnRole, "column"},
+        {ExplodedRole, "exploded"}
     };
 }
