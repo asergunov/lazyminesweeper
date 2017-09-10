@@ -27,6 +27,11 @@ Item {
         }
     }
 
+    Component.onCompleted: {
+        if(model.size.width === 0 || model.size.height === 0 || model.bombRemains === 0)
+            startNewGame();
+    }
+
     ParalaxFlickable {
         id: fieldContainer
 
