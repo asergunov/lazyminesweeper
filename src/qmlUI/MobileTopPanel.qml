@@ -1,6 +1,9 @@
 import QtQuick 2.4
 import QtQuick.Controls 2.0
 import QtGraphicalEffects 1.0
+import QtQuick.Layouts 1.3
+
+import "timeFormat.js" as TimeFormatModule
 
 Item {
     id: topPanel
@@ -9,6 +12,10 @@ Item {
     property MobileCellCache cache
     property alias solverInprogress: solverButton.inProgress
     property alias solverActive: solverButton.active
+
+    property int secocndsHumanSpent: 0
+    property int secocndsMachineSpent: 0
+    property real riskTaken: 0
 
     signal makeBestTurn();
     signal restart();
@@ -40,65 +47,107 @@ Item {
         //visible: false
     }
     
-    GlowText {
-        id: bombRemains
-        width: 30; height: 30
-        anchors.centerIn: parent
-        text: topPanel.bombRemains
+    Row {
+        spacing: 5
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        GlowText {
+            id: bombRemains
+            width: 30;
+            anchors.verticalCenter: parent.verticalCenter
+            text: topPanel.bombRemains
+        }
+
+//        ProbablityItem {
+//            safe: false
+//            anchors.verticalCenter: parent.verticalCenter
+//            cache: topPanel.cache
+//            probablity: riskTaken
+
+//            Behavior on probablity {NumberAnimation {
+//                    easing.type: Easing.InOutQuad
+//                }
+//            }
+//        }
     }
 
-    Button {
-        id: restartButton
-
+    Row {
         anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.margins: 4
+        spacing: 5
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
 
-        text: "Restart"
-        onClicked: restart();
+        Button {
+            id: restartButton
+
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.margins: 4
+
+            text: "Restart"
+            onClicked: restart();
+        }
     }
 
-    Button {
-        id: solverButton
-
-        property bool inProgress: false
-        property bool active: true
-
-        anchors.verticalCenter: parent.verticalCenter
+    Row {
+        spacing: 5
         anchors.left: parent.left
-        width: parent.height; height: parent.height
+        height: parent.height
+        Button {
+            id: solverButton
 
-        indicator: Item {
-            anchors.fill: parent
+            property bool inProgress: false
+            property bool active: true
 
-            Rectangle {
-                color: "#f0f0f0"
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.height; height: parent.height
+
+            indicator: Item {
                 anchors.fill: parent
-                opacity: 0.8;
-            }
-            ProbablityItem {
-                id: trivialShader
-                anchors.fill: parent
-                anchors.margins: 3
-                safe: solverButton.active && !solverButton.inProgress
-                cache: topPanel.cache
-                SequentialAnimation {
-                    loops: Animation.Infinite
-                    running: solverButton.inProgress
-                    NumberAnimation {
-                        target: trivialShader
-                        property: "probablity"
-                        from: 0.0; to: 1.0;
-                        duration: 1000
-                    }
-                    NumberAnimation {
-                        target: trivialShader
-                        property: "probablity"
-                        to: 0.0;
-                        duration: 1000
+
+                Rectangle {
+                    color: "#f0f0f0"
+                    anchors.fill: parent
+                    opacity: 0.8;
+                }
+                ProbablityItem {
+                    id: trivialShader
+                    anchors.fill: parent
+                    anchors.margins: 3
+                    safe: solverButton.active && !solverButton.inProgress
+                    cache: topPanel.cache
+                    SequentialAnimation {
+                        loops: Animation.Infinite
+                        running: solverButton.inProgress
+                        NumberAnimation {
+                            target: trivialShader
+                            property: "probablity"
+                            from: 0.0; to: 1.0;
+                            duration: 1000
+                        }
+                        NumberAnimation {
+                            target: trivialShader
+                            property: "probablity"
+                            to: 0.0;
+                            duration: 1000
+                        }
                     }
                 }
             }
         }
+
+//        GlowText {
+//            anchors.verticalCenter: parent.verticalCenter
+//            text: TimeFormatModule.toHHMMSS(secocndsMachineSpent)
+//            font.pixelSize: 15
+//        }
+
+        GlowText {
+            anchors.verticalCenter: parent.verticalCenter
+            text: TimeFormatModule.toHHMMSS(secocndsHumanSpent)
+            font.pixelSize: 15
+        }
+
     }
 }

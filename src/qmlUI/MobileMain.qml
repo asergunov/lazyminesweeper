@@ -92,11 +92,18 @@ Item {
         onRestart: main.startNewGame()
         solverActive: true
         solverInprogress: model.solverRunning
+        secocndsHumanSpent: model.timeSpentByHuman
+        secocndsMachineSpent: model.timeSpentByMachine
+        riskTaken: model.riskTaken
     }
 
     StatsScreen {
         id: statsScreen
         source: main
+        secocndsHumanSpent: model.timeSpentByHuman
+        secocndsMachineSpent: model.timeSpentByMachine
+        millisecocndsMachineSpent: model.timeSpentByMachineMS
+        riskTaken: model.riskTaken
         visible: false
         parent: main.parent
         onRestart: main.restart()

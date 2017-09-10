@@ -28,5 +28,6 @@
         <file>NewGameDialog.qml</file>
         <file>CloudBackground.qml</file>
         <file>clouds.png</file>
+        <file>timeFormat.js</file>
     </qresource>
 </RCC>

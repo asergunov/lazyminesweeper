@@ -6,12 +6,13 @@
 
 #include <QObject>
 #include <QSize>
-#include <QPoint>
-#include <QVariant>
+#include <QTime>
 
 #include <thread>
+#include <chrono>
 
 class QSettings;
+class QPoint;
 
 class Field : public QObject
 {
@@ -22,6 +23,12 @@ class Field : public QObject
     Q_PROPERTY(int bombRemains READ bombRemains NOTIFY bombRemainsChanged)
     Q_PROPERTY(int bombCount READ bombCount NOTIFY bombCountChanged)
     Q_PROPERTY(bool isGameOver READ isGameOver NOTIFY gameOver)
+
+    // stats
+    Q_PROPERTY(qreal riskTaken READ riskTaken NOTIFY riskTakenChanged)
+    Q_PROPERTY(int timeSpentByHuman READ timeSpentByHuman NOTIFY timeSpentByHumanChanged)
+    Q_PROPERTY(int timeSpentByMachine READ timeSpentByMachine NOTIFY timeSpentByMachineChanged)
+    Q_PROPERTY(qlonglong timeSpentByMachineMS READ timeSpentByMachineMS NOTIFY timeSpentByMachineChanged)
 
 public:
     using Topology = ::Topology;
@@ -46,6 +53,15 @@ public:
     int bombCount() const;
     bool isGameOver() const;
 
+    const qreal& riskTaken() const
+    {
+        return m_stats.riskTaken;
+    }
+
+    int timeSpentByHuman() const;
+    int timeSpentByMachine() const;
+    qlonglong timeSpentByMachineMS() const;
+
 signals:
     void sizeChanged(const QSize&);
     void probablitiesChanged();
@@ -53,6 +69,14 @@ signals:
     void bombRemainsChanged(int bombRemains);
     void bombCountChanged(int bombCount);
     void gameOver(bool win);
+
+    void riskTakenChanged();
+    void timeSpentByHumanChanged();
+    void timeSpentByMachineChanged();
+
+    // QObject interface
+protected:
+    void timerEvent(QTimerEvent *event) override;
 
 private:
     void sceduleProbablityUpdate();
@@ -73,6 +97,40 @@ private:
     Cells* _cells = nullptr;
     bool m_autoFlag = true;
     int m_bombRemains = 0;
+
+    struct Stats {
+        using clock = std::chrono::steady_clock;
+        using duration = clock::duration;
+
+        qreal riskTaken;
+
+        void clear();
+        void reset(const duration& humanTime, const duration& machineTime, const qreal riskTaken);
+
+        void machineStarted();
+        void machineStoped();
+
+        void pause();
+        void resume();
+
+        duration timeSpentByMachine() const;
+        duration timeSpentByHuman() const;
+
+
+    private:
+        bool machineWorking = false;
+        bool humanCounting = true;
+
+        duration _timeSpentByHuman;
+        duration _timeSpentByMachine;
+
+        clock::time_point machineStartTimetamp;
+        clock::time_point userStartTimetamp;
+    } m_stats;
+    int m_timer;
+
 };
+
+
 
 #endif // FIELD_HPP

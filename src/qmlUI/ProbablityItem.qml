@@ -9,6 +9,8 @@ Item {
     property bool opened: false
     property MobileCellCache cache
 
+    width: mine.width; height: mine.height
+
     TrivialShader {
         id: mine
         property real probablity: 0.0

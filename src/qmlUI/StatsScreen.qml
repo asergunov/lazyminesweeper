@@ -3,11 +3,19 @@ import QtGraphicalEffects 1.0
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.0
 
+import "timeFormat.js" as TimeFormatModule
+
 Item {
     id: statsScreen
     property Item source
     property bool win: false
     property bool shown: false
+
+    property int secocndsHumanSpent: 0
+    property int secocndsMachineSpent: 0
+    property variant millisecocndsMachineSpent : 0;
+    property real riskTaken: 0
+
     signal restart();
     signal startNewGame();
 
@@ -54,6 +62,18 @@ Item {
                 color: "white"
                 font.pixelSize: 40
                 Layout.fillHeight: true
+            }
+
+            Text {
+                id: statsText
+                color: "white"
+                Layout.alignment: Qt.AlignHCenter
+                textFormat: Text.RichText
+                text: qsTr("<table><thead><h1>Game stats</h1></thead>" +
+                           "<tr><td>Time spent by human:</td><td>" + TimeFormatModule.toHHMMSS(secocndsHumanSpent) + "</td></tr>" +
+                           "<tr><td>Time spent by machine: </td><td>"+ (secocndsMachineSpent > 2 ? TimeFormatModule.toHHMMSS(secocndsMachineSpent) : (millisecocndsMachineSpent+qsTr(" ms"))) +"</td></tr>" +
+                           //"<tr><td>Cells clicked: </td><td>"+cellsClicked+"</td></tr>" +
+                           "<tr><td>Risk taken: </td><td>"+parseFloat(Math.round(riskTaken * 10000) / 100).toFixed(2) + "%</td></tr></table>")
             }
 
             Button {

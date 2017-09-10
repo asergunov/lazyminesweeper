@@ -6,10 +6,12 @@ Item {
     property alias text: text.text
     property alias color: text.color
     property alias font: text.font
+    width: text.width
+    height: text.width
     Glow {
         anchors.fill: text
-        radius: 15
-        samples: 20
+        radius: font.pixelSize*15/20
+        samples: font.pixelSize
         
         color: "white"
         source: text

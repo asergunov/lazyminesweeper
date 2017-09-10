@@ -7,6 +7,7 @@
 #include <QWaitCondition>
 #include <QApplication>
 #include <QSettings>
+#include <QPoint>
 
 namespace {
 static const auto fieldSuspendStateGroup = "fieldSuspendState";
@@ -112,6 +113,12 @@ void Field::setSolverRunning(bool arg)
 
     m_solverRunning = arg;
 
+    if(arg)
+        m_stats.machineStarted();
+    else
+        m_stats.machineStoped();
+
+
     emit solverRunningChanged(arg);
 
     if(arg)
@@ -121,8 +128,15 @@ void Field::setSolverRunning(bool arg)
 
 void Field::click(const minesweeper::engine::square_board::Topology::index_type &index)
 {
+    const auto& probablity = _data->porabablityDouble(index);
+
     if(!_data->openField(index))
         return;
+
+    if(probablity > 0) {
+        m_stats.riskTaken = 1.0 - (1.0 - m_stats.riskTaken) * (1.0 - probablity);
+        emit riskTakenChanged();
+    }
 
     if(_data->player().isGameOver()) {
         setGameOver(false);
@@ -149,6 +163,7 @@ Field::Field(QObject *parent)
     : QObject(parent)
     , _data(new Data(0, 0, 0))
     , _cells(new Cells(_data.get(), this))
+    , m_timer(startTimer(500, Qt::CoarseTimer))
 {
     auto writeSuspendState = [](const Field* field, QSettings& s) {
         Q_ASSERT(s.isWritable());
@@ -172,6 +187,10 @@ Field::Field(QObject *parent)
         if(state == Qt::ApplicationState::ApplicationSuspended) {
             QSettings s;
             writeSuspendState(this, s);
+        } else if(state == Qt::ApplicationState::ApplicationHidden) {
+            m_stats.pause();
+        } else if(state == Qt::ApplicationState::ApplicationActive) {
+            m_stats.resume();
         }
     });
 
@@ -198,6 +217,8 @@ QSize Field::size() const
 void Field::init(const QSize &size, int bombCount)
 {
     setData(std::make_shared<Data>(size.width(), size.height(), bombCount));
+    m_stats.clear();
+    emit riskTakenChanged();
 }
 
 
@@ -214,6 +235,7 @@ void Field::setData(std::shared_ptr<Field::Data> data)
 
 void Field::setGameOver(bool win)
 {
+    m_stats.pause();
     emit gameOver(win);
 }
 
@@ -224,6 +246,10 @@ static const auto keyPosition = "position";
 static const auto keyBombs = "bombs";
 static const auto keyFlags = "flags";
 static const auto keyOpened = "opened";
+
+static const auto keyTimeSpentByUser = "timeSpentByUser";
+static const auto keyTimeSpentByMachine = "timeSpentByMachine";
+static const auto keyRiskTaken = "riskTaken";
 }
 
 void Field::restoreState(QSettings &s)
@@ -256,8 +282,16 @@ void Field::restoreState(QSettings &s)
     for(const auto& index: flags)
         player.setFlag(index);
 
+    m_stats.reset(Stats::duration(s.value(keyTimeSpentByUser).toLongLong()),
+                  Stats::duration(s.value(keyTimeSpentByMachine).toLongLong()),
+                  s.value(keyRiskTaken).toReal());
+
+    emit riskTakenChanged();
     if(s.contains(keyLoseIndex)) {
         data.openField(toIndex(s.value(keyLoseIndex).toPoint()));
+        m_stats.pause();
+    } else {
+        m_stats.resume();
     }
     setData(sharedData);
 }
@@ -295,6 +329,10 @@ void Field::writeState(QSettings& s) const
     writeIndexSet(keyBombs, data.privateData().bombs);
     writeIndexSet(keyFlags, player.flags);
     writeIndexSet(keyOpened, keySet(player.openedItems()));
+
+    s.setValue(keyTimeSpentByUser, QVariant::fromValue<qlonglong>(m_stats.timeSpentByHuman().count()));
+    s.setValue(keyTimeSpentByMachine, QVariant::fromValue<qlonglong>(m_stats.timeSpentByMachine().count()));
+    s.setValue(keyRiskTaken, m_stats.riskTaken);
 }
 
 void Field::click(const QPoint &index)
@@ -330,4 +368,109 @@ int Field::bombCount() const
 
 bool Field::isGameOver() const {
     return _data->player().isGameOver();
+}
+
+int Field::timeSpentByHuman() const
+{
+    using namespace std::chrono;
+    return duration_cast<seconds>(m_stats.timeSpentByHuman()).count();
+}
+
+int Field::timeSpentByMachine() const
+{
+    using namespace std::chrono;
+    return duration_cast<seconds>(m_stats.timeSpentByMachine()).count();
+}
+
+qlonglong Field::timeSpentByMachineMS() const
+{
+    using namespace std::chrono;
+    return duration_cast<milliseconds>(m_stats.timeSpentByMachine()).count();
+}
+
+void Field::Stats::clear()
+{
+    riskTaken = 0;
+    using namespace std::chrono;
+    _timeSpentByHuman = duration::zero();
+    _timeSpentByMachine = duration::zero();
+    userStartTimetamp = clock::now();
+    machineWorking = false;
+    humanCounting = true;
+}
+
+void Field::Stats::reset(const Field::Stats::duration &humanTime, const Field::Stats::duration &machineTime, const qreal riskTaken)
+{
+    _timeSpentByHuman = humanTime;
+    _timeSpentByMachine = machineTime;
+    this->riskTaken = riskTaken;
+    machineStartTimetamp = userStartTimetamp = clock::now();
+    humanCounting = true;
+}
+
+void Field::Stats::machineStarted() {
+    if(machineWorking)
+        return;
+
+    machineWorking = true;
+    const auto& now = clock::now();
+    machineStartTimetamp = now;
+    if(humanCounting)
+        _timeSpentByHuman += now - userStartTimetamp;
+}
+
+void Field::Stats::machineStoped() {
+    if(!machineWorking)
+        return;
+
+    machineWorking = false;
+    const auto& now = clock::now();
+    userStartTimetamp = now;
+    _timeSpentByMachine += now - machineStartTimetamp;
+}
+
+void Field::Stats::resume()
+{
+    if(humanCounting)
+        return;
+
+    userStartTimetamp = clock::now();
+}
+
+void Field::Stats::pause()
+{
+    if(!humanCounting)
+        return;
+
+    humanCounting = false;
+
+    const auto& now = clock::now();
+    _timeSpentByHuman += now - userStartTimetamp;
+}
+
+Field::Stats::duration Field::Stats::timeSpentByMachine() const {
+    auto result = _timeSpentByMachine;
+
+    if(machineWorking) {
+        result += clock::now() - machineStartTimetamp;
+    }
+    return result;
+}
+
+Field::Stats::duration Field::Stats::timeSpentByHuman() const {
+    auto result = _timeSpentByHuman;
+
+    if(humanCounting) {
+        result += clock::now() - userStartTimetamp;
+    }
+    return result;
+}
+
+void Field::timerEvent(QTimerEvent *event)
+{
+    if(m_timer != event->timerId())
+        return QObject::timerEvent(event);
+
+    emit timeSpentByHumanChanged();
+    emit timeSpentByMachineChanged();
 }
