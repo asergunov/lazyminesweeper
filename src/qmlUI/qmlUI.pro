@@ -29,4 +29,13 @@ INCLUDEPATH+= /home/asergunov/boost_1_64_0
 }
 
 DISTFILES += \
-    qmldir
+    qmldir \
+    android/AndroidManifest.xml \
+    android/gradle/wrapper/gradle-wrapper.jar \
+    android/gradlew \
+    android/res/values/libs.xml \
+    android/build.gradle \
+    android/gradle/wrapper/gradle-wrapper.properties \
+    android/gradlew.bat
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android

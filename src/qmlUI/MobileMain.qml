@@ -30,9 +30,8 @@ Item {
     ParalaxFlickable {
         id: fieldContainer
 
-        image: Image {
-            fillMode: Image.PreserveAspectCrop
-            source: "ginkaku-ji-temple-kyoto-japan-161247.jpeg"
+        image: Rectangle {
+            color: "#AAA"
         }
 
         anchors.fill: parent
