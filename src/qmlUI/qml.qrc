@@ -26,5 +26,6 @@
         <file>ProbablityItem.qml</file>
         <file>StatsScreen.qml</file>
         <file>NewGameDialog.qml</file>
+        <file>CloudBackground.qml</file>
     </qresource>
 </RCC>
