@@ -35,16 +35,9 @@ Item {
     ParalaxFlickable {
         id: fieldContainer
 
-        image: TrivialShader {
-            id: cloudCached
-            source: ShaderEffectSource {
-                textureSize: Qt.size(cloudCached.width/4, cloudCached.height/4)
-                live: true
-                sourceItem: CloudBackground {
-                    width: cloudCached.width;
-                    height: cloudCached.height;
-                }
-            }
+        image: Image {
+            fillMode: Image.PreserveAspectCrop
+            source: "clouds.png"
         }
 
         anchors.fill: parent

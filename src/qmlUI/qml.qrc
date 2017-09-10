@@ -27,5 +27,6 @@
         <file>StatsScreen.qml</file>
         <file>NewGameDialog.qml</file>
         <file>CloudBackground.qml</file>
+        <file>clouds.png</file>
     </qresource>
 </RCC>
