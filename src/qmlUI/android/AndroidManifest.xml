@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<manifest package="com.asergunov_dev.zen_minesweeper" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="1.0" android:versionCode="1" android:installLocation="auto">
+<manifest package="com.asergunov_dev.zen_minesweeper" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="1.0" android:versionCode="3" android:installLocation="auto">
     <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="Zen Minesweeper" android:icon="@drawable/icon">
         <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.qtproject.qt5.android.bindings.QtActivity" android:label="Zen Minesweeper" android:screenOrientation="unspecified" android:launchMode="singleTop">
             <intent-filter>
@@ -11,7 +11,7 @@
             <!-- meta-data android:name="android.app.arguments" android:value="arg1 arg2 arg3"/ -->
             <!-- Application arguments -->
 
-            <meta-data android:name="android.app.lib_name" android:value="Zen Minesweeper"/>
+            <meta-data android:name="android.app.lib_name" android:value="minsweeper-qml-ui"/>
             <meta-data android:name="android.app.qt_sources_resource_id" android:resource="@array/qt_sources"/>
             <meta-data android:name="android.app.repository" android:value="default"/>
             <meta-data android:name="android.app.qt_libs_resource_id" android:resource="@array/qt_libs"/>
