@@ -11,6 +11,8 @@
 
 #include <thread>
 
+class QSettings;
+
 class Field : public QObject
 {
     Q_OBJECT
@@ -19,12 +21,11 @@ class Field : public QObject
     Q_PROPERTY(Cells* cells READ cells CONSTANT)
     Q_PROPERTY(int bombRemains READ bombRemains NOTIFY bombRemainsChanged)
     Q_PROPERTY(int bombCount READ bombCount NOTIFY bombCountChanged)
+    Q_PROPERTY(bool isGameOver READ isGameOver NOTIFY gameOver)
 
 public:
     using Topology = ::Topology;
     using Data = ::GameEngine;
-
-
 
 public:
     explicit Field(QObject *parent = 0);
@@ -41,12 +42,9 @@ public:
 
     bool isSolverRunning() const;
 
-    int bombRemains() const
-    {
-        return m_bombRemains;
-    }
-
+    const int& bombRemains() const { return m_bombRemains; }
     int bombCount() const;
+    bool isGameOver() const;
 
 signals:
     void sizeChanged(const QSize&);
@@ -63,6 +61,10 @@ private:
     void click(const Field::Topology::index_type& index);
     void setBombRemains(const int &arg);
     void setData(std::shared_ptr<Data> data);
+    void setGameOver(bool win);
+
+    void writeState(QSettings& s) const;
+    void restoreState(QSettings& s);
 
 private:
     std::shared_ptr<Data> _data;

@@ -9,6 +9,10 @@
 #include <QSettings>
 
 namespace {
+static const auto fieldSuspendStateGroup = "fieldSuspendState";
+}
+
+namespace {
     Field::Topology::index_type toIndex(const QPoint& p) {
         return {
             static_cast<Field::Topology::index_type::coord_type>(p.x()),
@@ -121,7 +125,7 @@ void Field::click(const minesweeper::engine::square_board::Topology::index_type 
         return;
 
     if(_data->player().isGameOver()) {
-        emit gameOver(false);
+        setGameOver(false);
         return;
     }
 
@@ -137,7 +141,7 @@ void Field::setBombRemains(const int& arg)
     m_bombRemains = arg;
     emit bombRemainsChanged(arg);
     if(arg == 0)
-        emit gameOver(true);
+        setGameOver(true);
 }
 
 
@@ -146,71 +150,22 @@ Field::Field(QObject *parent)
     , _data(new Data(0, 0, 0))
     , _cells(new Cells(_data.get(), this))
 {
-    static const auto fieldSuspendStateGroup = "fieldSuspendState";
     auto writeSuspendState = [](const Field* field, QSettings& s) {
         Q_ASSERT(s.isWritable());
         s.beginGroup(fieldSuspendStateGroup);
-        s.setValue("size", field->size());
-
-        auto writeIndexSet = [&](const QString& name, const Data::index_set_type& indexSet) {
-            int i = 0;
-            s.beginWriteArray(name, static_cast<int>(indexSet.size()));
-            for(const auto& index : indexSet) {
-                s.setArrayIndex(i++);
-                s.setValue("position", toPoint(index));
-            }
-            s.endArray();
-        };
-
-        auto keySet = [](const Data::PlayerData::opened_items_type& opened_map) {
-            Data::index_set_type result;
-            for(const auto& pair : opened_map) {
-                result.insert(pair.first);
-            }
-            return result;
-        };
-
-        writeIndexSet("bombs", field->_data->privateData().bombs);
-        writeIndexSet("flags", field->_data->player().flags);
-        writeIndexSet("opened", keySet(field->_data->player().openedItems()));
-
+        field->writeState(s);
         s.endGroup(); // fieldSuspendStateGroup
     };
 
     auto readSuspendState = [](Field* field, QSettings& s) {
-
         if(!s.childGroups().contains(fieldSuspendStateGroup))
             return;
 
         s.beginGroup(fieldSuspendStateGroup);
-        const auto size = s.value("size").toSize();
-
-        auto readIndexSet = [&](const QString& name) {
-            Data::index_set_type indexSet;
-            const int count = s.beginReadArray(name);
-            for(int i = 0; i<count; ++i) {
-                s.setArrayIndex(i);
-                indexSet.insert(toIndex( s.value("position").toPoint() ));
-            }
-            s.endArray();
-            return indexSet;
-        };
-
-        const auto& bombs = readIndexSet("bombs");
-        const auto& flags = readIndexSet("flags");
-        const auto& opened = readIndexSet("opened");
+        field->restoreState(s);
 
         s.endGroup(); // fieldSuspendState
         s.remove("fieldSuspendState");
-
-        auto data = std::make_shared<Data>(size.width(), size.height(), bombs);
-        for(const auto& index: opened)
-            data->openField(index);
-        for(const auto& index: flags)
-            data->player().setFlag(index);
-
-        field->setData(data);
-
     };
 
     connect(qApp, &QApplication::applicationStateChanged, this, [this, writeSuspendState](Qt::ApplicationState state){
@@ -226,6 +181,11 @@ Field::Field(QObject *parent)
 
 Field::~Field()
 {
+    QSettings s;
+    s.beginGroup(fieldSuspendStateGroup);
+    writeState(s);
+    s.endGroup(); // fieldSuspendStateGroup
+
     if(_worker_thread.joinable())
         _worker_thread.join();
 }
@@ -250,6 +210,91 @@ void Field::setData(std::shared_ptr<Field::Data> data)
     setSolverRunning(false);
     setBombRemains(_data->bombRemains());
     runNextScedule();
+}
+
+void Field::setGameOver(bool win)
+{
+    emit gameOver(win);
+}
+
+namespace  {
+static const auto keySize = "size";
+static const auto keyLoseIndex = "loseIndex";
+static const auto keyPosition = "position";
+static const auto keyBombs = "bombs";
+static const auto keyFlags = "flags";
+static const auto keyOpened = "opened";
+}
+
+void Field::restoreState(QSettings &s)
+{
+    const auto size = s.value(keySize).toSize();
+
+    auto readIndexSet = [&](const QString& name) {
+        Data::index_set_type indexSet;
+        const int count = s.beginReadArray(name);
+        for(int i = 0; i<count; ++i) {
+            s.setArrayIndex(i);
+            indexSet.insert(toIndex( s.value(keyPosition).toPoint() ));
+        }
+        s.endArray();
+        return indexSet;
+    };
+
+    const auto& bombs = readIndexSet(keyBombs);
+    const auto& flags = readIndexSet(keyFlags);
+    const auto& opened = readIndexSet(keyOpened);
+
+
+    auto sharedData = std::make_shared<Data>(size.width(), size.height(), bombs);
+
+    auto& data = *sharedData;
+    auto& player = data.player();
+
+    for(const auto& index: opened)
+        data.openField(index);
+    for(const auto& index: flags)
+        player.setFlag(index);
+
+    if(s.contains(keyLoseIndex)) {
+        data.openField(toIndex(s.value(keyLoseIndex).toPoint()));
+    }
+    setData(sharedData);
+}
+
+void Field::writeState(QSettings& s) const
+{
+    const auto& data = *_data;
+    const auto& player = data.player();
+
+    if(player.isGameOver()) {
+        s.setValue(keyLoseIndex, toPoint(player.looseIndex()));
+    } else {
+        s.remove(keyLoseIndex);
+    }
+
+    s.setValue(keySize, size());
+    auto writeIndexSet = [&](const QString& name, const Data::index_set_type& indexSet) {
+        int i = 0;
+        s.beginWriteArray(name, static_cast<int>(indexSet.size()));
+        for(const auto& index : indexSet) {
+            s.setArrayIndex(i++);
+            s.setValue(keyPosition, toPoint(index));
+        }
+        s.endArray();
+    };
+
+    auto keySet = [](const Data::PlayerData::opened_items_type& opened_map) {
+        Data::index_set_type result;
+        for(const auto& pair : opened_map) {
+            result.insert(pair.first);
+        }
+        return result;
+    };
+
+    writeIndexSet(keyBombs, data.privateData().bombs);
+    writeIndexSet(keyFlags, player.flags);
+    writeIndexSet(keyOpened, keySet(player.openedItems()));
 }
 
 void Field::click(const QPoint &index)
@@ -281,4 +326,8 @@ bool Field::isSolverRunning() const
 int Field::bombCount() const
 {
     return _data->player().totalBombCount;
+}
+
+bool Field::isGameOver() const {
+    return _data->player().isGameOver();
 }

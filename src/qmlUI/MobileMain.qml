@@ -15,7 +15,7 @@ Item {
 
     function startNewGame() {
         newGameDialog.shown = true;
-        statsScreen.shown = false
+        statsScreen.shown = false;
     }
 
     Connections {
@@ -28,7 +28,7 @@ Item {
     }
 
     Component.onCompleted: {
-        if(model.size.width === 0 || model.size.height === 0 || model.bombRemains === 0)
+        if(model.size.width === 0 || model.size.height === 0 || model.bombRemains === 0 || model.isGameOver)
             startNewGame();
     }
 
