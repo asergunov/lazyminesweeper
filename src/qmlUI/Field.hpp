@@ -79,8 +79,8 @@ protected:
     void timerEvent(QTimerEvent *event) override;
 
 private:
-    void sceduleProbablityUpdate();
-    void runNextScedule();
+    void scheduleProbablityUpdate();
+    void runNextschedule();
     void setSolverRunning(bool);
     void click(const Field::Topology::index_type& index);
     void setBombRemains(const int &arg);

@@ -37,7 +37,7 @@ namespace {
         // lock the mutex
         QMutexLocker locker(&mutex);
 
-        // scedule object delete
+        // schedule object delete
         obj->deleteLater();
 
         // connect to destroyed signal
@@ -59,12 +59,12 @@ namespace {
 
 }
 
-void Field::sceduleProbablityUpdate()
+void Field::scheduleProbablityUpdate()
 {
-    this->runNextScedule();
+    this->runNextschedule();
 }
 
-void Field::runNextScedule()
+void Field::runNextschedule()
 {
     if(isSolverRunning())
         return;
@@ -99,7 +99,7 @@ void Field::runNextScedule()
 
                     _cells->emitPorabablitesChange();
                     setSolverRunning(false);
-                    runNextScedule();
+                    runNextschedule();
                 }
             });
         });
@@ -122,7 +122,7 @@ void Field::setSolverRunning(bool arg)
     emit solverRunningChanged(arg);
 
     if(arg)
-        runNextScedule();
+        runNextschedule();
 
 }
 
@@ -143,7 +143,7 @@ void Field::click(const minesweeper::engine::square_board::Topology::index_type 
         return;
     }
 
-    sceduleProbablityUpdate();
+    scheduleProbablityUpdate();
     _cells->emitDataChange();
 }
 
@@ -230,7 +230,7 @@ void Field::setData(std::shared_ptr<Field::Data> data)
     _cells->resetEngine(_data.get());
     setSolverRunning(false);
     setBombRemains(_data->bombRemains());
-    runNextScedule();
+    runNextschedule();
 }
 
 void Field::setGameOver(bool win)
@@ -345,7 +345,7 @@ void Field::douleClick(const QPoint &_index)
 {
     const auto& index = toIndex(_index);
     _data->openAllNear(index);
-    sceduleProbablityUpdate();
+    scheduleProbablityUpdate();
     _cells->emitDataChange();
 }
 
@@ -353,7 +353,7 @@ void Field::makeBestTurn()
 {
     _data->makeBestTurn();
     _cells->emitDataChange();
-    sceduleProbablityUpdate();
+    scheduleProbablityUpdate();
 }
 
 bool Field::isSolverRunning() const

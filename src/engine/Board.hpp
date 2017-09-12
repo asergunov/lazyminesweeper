@@ -83,12 +83,12 @@ struct GameEngine {
         const auto player_data = data->_player_data;
         auto intermediate = data->_intermediate;
         auto version = data->_dataVersion;
-        auto scedule = [data, player_data, version, intermediate, on_finish]() mutable {
+        auto schedule = [data, player_data, version, intermediate, on_finish]() mutable {
             auto porapablities = data->_solver.probablities(data->_topology, player_data, intermediate);
             on_finish(data, version, intermediate, porapablities);
         };
 
-        return std::thread(scedule);
+        return std::thread(schedule);
     }
 
     bool merge_solution(size_t version,
